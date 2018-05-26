@@ -7,6 +7,8 @@ class Crossing:
 			self.rhr = -1
 		else:
 			self.rhr = 1
+	def __str__(self):
+		return '{self.index},{self.i},{self.j},{self.k},{self.i}'
 
 class Knot:
 	def __init__(self,pdcode):
@@ -15,31 +17,30 @@ class Knot:
 			c = Crossing(n,len(pdcode)*2)
 			self.d[c.i] = c
 	def dtCode(self):
-		dict = {}
-		for a in sorted(self.d.keys()):
+		pairs = {}
+		for a in self.d:
 			if a%2 == 1:
 				if self.d[a].rhr > 0:
-					dict[a] = -(self.d[a].l)
+					pairs[a] = -(self.d[a].l)
 				else:
-					dict[a] = -(self.d[a].j)
+					pairs[a] = -(self.d[a].j)
+			elif self.d[a].rhr > 0:
+				pairs[self.d[a].l] = a
 			else:
-				if self.d[a].rhr > 0:
-					dict[self.d[a].l] = a
-				else:
-					dict[self.d[a].j] = a
-		list = []
-		for a in sorted(dict.keys()):
-			list += dict[a]
-		return list
+				pairs[self.d[a].j] = a
+		dtcode = []
+		for a in sorted(pairs):
+			dtcode += pairs[a]
+		return dtcode
 	def gaussCode(self):
 		list = dtCode(self)
 		t = []
 		for n in range(1,len(list)+1):
 			t += 2*n-1
 			t += list[n-1]
-		gcode = []
-		for n in range(0,len(t)):
-			gcode += 0
+		gcode = [0] * len(t)
+		#for n in range(len(t)):
+		#	gcode += 0
 		for n in t:
 			if n%2 == 1: # n is odd
 				if n <= len(t)//2: # first time through a crossing
@@ -67,4 +68,8 @@ class Knot:
 			if dt[n-1]*dt[i] > 0:
 			 return False
 		return True
+	def copy(self):
+		return Knot(self.d.copy())
+	def __str__(self):
+		return str(self.d)
 		
