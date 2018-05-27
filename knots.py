@@ -7,6 +7,13 @@ class Crossing:
 			self.rhr = -1
 		else:
 			self.rhr = 1
+	def cc(self):
+		if self.rhr > 0:
+			self.i,self.j,self.k,self.l = self.l,self.i,self.j,self.k
+		else:
+			self.i,self.j,self.k,self.l = self.j,self.k,self.l,self.i
+		self.index *= -1
+		self.rhr *= -1
 	def __str__(self):
 		return '{self.index},{self.i},{self.j},{self.k},{self.i}'
 
@@ -54,15 +61,22 @@ class GCode:
 				self.code += [(-1 if n < 0 else 1)*self.maxi]
 				self.maxi += 1
 		self.maxi -= 1
-
+# k = Knot( ( (index,i,j,k,l),(index,i,j,k,l)... ) , ( (reg1,reg2,reg3),(reg4,reg1)... ) )
 class Knot:
-	def __init__(self,pdcode):
-		self.d = {}
+	def __init__(self,pdcode,regions):
+		self.d = {} # maps crossing number to crossing
 		i = 1
 		for n in pdcode:
 			c = Crossing(n,len(pdcode)*2)
 			self.d[i] = c
 			i += 1
+		self.r = {} # maps region number to list of numbers of bordering crossing
+		i = 1
+		for n in regions:
+			self.r[i] = n[:]
+	def rcc(self,i) # RCC move on region i
+		for n in self.r[i]:
+			self.d[n].cc()
 	def dtCode(self):
 		pairs = {}
 		for a in self.d:
@@ -77,14 +91,14 @@ class Knot:
 				pairs[self.d[a].j] = a
 		dtcode = []
 		for a in sorted(pairs):
-			dtcode += pairs[a]
+			dtcode += [pairs[a]]
 		return dtcode
 	def gaussCode(self):
 		list = dtCode(self)
 		t = []
 		for n in range(1,len(list)+1):
-			t += 2*n-1
-			t += list[n-1]
+			t += [2*n-1]
+			t += [list[n-1]]
 		gcode = [0] * len(t)
 		for n in t:
 			if n%2 == 1: # n is odd
