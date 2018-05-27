@@ -121,8 +121,17 @@ class Knot:
 		del m[len(m)-1]
 		for n in range(len(m)):
 			del m[n][len(m)]
-		return det(m)
-		#return solve(m,1)
+		apoly = det(m)
+		#apoly = solve(m,1)
+		i = 0
+		while i < len(apoly.t) and apoly.t[i] == 0:
+			i += 1
+		if i != 0:
+			for j in range(i,len(apoly.t)):
+				apoly.t[j-i] = apoly.t[j]
+		while len(apoly.t) > 1 and apoly.t[len(apoly.t)-1] == 0:
+			del apoly.t[len(apoly.t)-1]
+		return apoly
 	def det(l):
 		n = len(l)
 		if (n>2):
