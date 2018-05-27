@@ -262,7 +262,7 @@ class Knot:
 			if len(l) == len(p):
 				return False
 		return True
-	def is_unknot(self,loose=False):
+	def is_unknot(self):
 		simp = self.simplify()
-		return (not simp.code) or loose and (not simp.is_alternating())
+		return (not simp.code) or simp.is_reduced(simp) and simp.is_alternating(simp)
 		
