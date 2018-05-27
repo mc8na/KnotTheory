@@ -16,15 +16,25 @@ class T:
 		self.t[0] += i
 		self.t[e] += c
 	def __add__(self,other):
+		new = T(0,0,0,max(len(self.t),len(other.t)))
 		for i in range(len(self.t)):
-			self.t[i] += other.t[i]
-		return self
+			new[i] += self.t[i]
+		for i in range(len(other.t)):
+			new[i] += other.t[i]
+		return new
+	def __sub__(self,other):
+		new = T(0,0,0,max(len(self.t),len(other.t)))
+		for i in range(len(self.t)):
+			new[i] += self.t[i]
+		for i in range(len(other.t)):
+			new[i] -= other.t[i]
+		return new
 	def __mul__(self,other):
 		new = T(0,0,0,len(self.t)+len(other.t)-1)
 		for i in range(len(self.t)):
 			for j in range(len(other.t)):
 				new[i+j] += self.t[i]*other.t[j]
-		return new	
+		return new
 	def __str__(self):
 		s = ""
 		for i in range(len(self.t)):
@@ -93,23 +103,67 @@ class Knot:
 		return Knot(self.d.copy())
 	def __str__(self):
 		return str(self.d)
-	def alexanderMatrix(self):
+	def aPoly(self):
 		gcode = gaussCode(self)
-		m = [[T(0,0,0) for x in range(len(self.d))] for y in range(len(self.d))]
+		m = [[T(0,0,0,1) for x in range(len(self.d))] for y in range(len(self.d))]
 		a = 1
 		for n in gcode:
 			if n > 0:
-				m[n][a] += T(-1,1,1)
+				m[n][a] += T(-1,1,1,2)
 			elif self.d[n].rhr > 0:
-				m[n][a] += T(0,0,-1)
+				m[n][a] += T(0,0,-1,2)
 				a += a%len(self.d) + 1
-				m[n][a] += T(1,1,0)
+				m[n][a] += T(1,1,0,2)
 			else:
 				m[n][a] += T(1,1,0)
 				a += a%len(self.d) + 1
-				m[n][a] += T(0,0,-1)
+				m[n][a] += T(0,0,-1,1)
 		del m[len(m)-1]
 		for n in range(len(m)):
 			del m[n][len(m)]
+		return det(m)
+		#return solve(m,1)
+	def det(l):
+		n = len(l)
+		if (n>2):
+			i,t,sum = T(0,0,1,1),0,T(0,0,0,1)
+			while t <= n-1:
+				d = {}
+				t1 = 1
+				while t1 <= n-1:
+					m = 0
+					d[t1] = []
+					while m <= n-1:
+						if (m == t):
+							u = 0
+						else:
+							d[t1].append(m[t1][m])
+						m += 1
+					t1 += 1
+				l1 = [d[x] for x in d]
+				sum = sum + i*(l[0][t])*(det(l1))
+				i = i*T(0,0,-1,1)
+				t += 1
+			return sum
+		else:
+			return(m[0][0]*m[1][1]-m[0][1]*m[1][0])
+	def solve(matrix,mul):
+		width = len(matrix)
+		if width == 1:
+			return mul * matrix[0][0]
+		else:
+			sign = T(0,0,-1,1)
+			total = T(0,0,0,1)
+			for i in range(width):
+				m = []
+				for j in range(1,width):
+					buff = []
+					for k in range(width):
+						if k != i:
+							buff.append(matrix[j][k])
+					m.append(buff)
+				sign *= T(0,0,-1,1)
+				total += mul * solve(m, sign * matrix[0][i])
+			return total
 					
 		
