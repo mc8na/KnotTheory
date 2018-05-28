@@ -124,7 +124,7 @@ class Knot:
 	def isAlternating(self):
 		dt = dtCode(self)
 		for n in range(len(dt)):
-			if dt[n-1]*dt[i] > 0:
+			if dt[n-1]*dt[n] < 0:
 			 return False
 		return True
 	def copy(self):
@@ -149,16 +149,16 @@ class Knot:
 		del m[len(m)-1]
 		for n in range(len(m)):
 			del m[n][len(m)]
-		apoly = det(m)
-		#apoly = solve(m,1)
+		#apoly = det(m)
+		apoly = solve(m,1)
 		i = 0
 		while i < len(apoly.t) and apoly.t[i] == 0:
 			i += 1
-		if i != 0:
+		if i > 0:
 			for j in range(i,len(apoly.t)):
 				apoly.t[j-i] = apoly.t[j]
-		while len(apoly.t) > 1 and apoly.t[len(apoly.t)-1] == 0:
-			del apoly.t[len(apoly.t)-1]
+		while len(apoly.t) > 1 and apoly.t[-1] == 0:
+			del apoly.t[-1]
 		return apoly
 	def det(l):
 		n = len(l)
@@ -271,12 +271,12 @@ class Knot:
 		for i in range(1,gcode.maxi+1):
 			pos1 = gcode.code.index(i)
 			pos2 = gcode.code.index(-i)
-			l = gcode.code[pos1+1,pos2]
+			l = gcode.code[min(pos1,pos2)+1:max(pos1,pos2)]
 			p = [(a,b) for a,b in itertools.permutations(l,2) if abs(a) == abs(b)]
 			if len(l) == len(p):
 				return False
 		return True
 	def is_unknot(self):
 		simp = self.simplify()
-		return (not simp.code) or simp.is_reduced(simp) and simp.is_alternating(simp)
+		return (not simp.code) or not (simp.is_reduced(simp) and simp.is_alternating(simp))
 		
