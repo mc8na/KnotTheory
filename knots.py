@@ -28,13 +28,8 @@ class T:
 			new.t[i] += self.t[i]
 		for i in range(len(other.t)):
 			new.t[i] += other.t[i]
-		return new
-	def __iadd__(self,other):
-		new = T(0,0,0,max(len(self.t),len(other.t)))
-		for i in range(len(self.t)):
-			new.t[i] += self.t[i]
-		for i in range(len(other.t)):
-			new.t[i] += other.t[i]
+		while len(new.t) > 1 and new.t[-1] == 0:
+			del new.t[-1]
 		return new
 	def __sub__(self,other):
 		new = T(0,0,0,max(len(self.t),len(other.t)))
@@ -42,25 +37,16 @@ class T:
 			new.t[i] += self.t[i]
 		for i in range(len(other.t)):
 			new.t[i] -= other.t[i]
-		return new
-	def __isub__(self,other):
-		new = T(0,0,0,max(len(self.t),len(other.t)))
-		for i in range(len(self.t)):
-			new.t[i] += self.t[i]
-		for i in range(len(other.t)):
-			new.t[i] -= other.t[i]
+		while len(new.t) > 1 and new.t[-1] == 0:
+			del new.t[-1]
 		return new
 	def __mul__(self,other):
 		new = T(0,0,0,len(self.t)+len(other.t)-1)
 		for i in range(len(self.t)):
 			for j in range(len(other.t)):
 				new.t[i+j] += self.t[i]*other.t[j]
-		return new
-	def __imul__(self,other):
-		new = T(0,0,0,len(self.t)+len(other.t)-1)
-		for i in range(len(self.t)):
-			for j in range(len(other.t)):
-				new.t[i+j] += self.t[i]*other.t[j]
+		while len(new.t) > 1 and new.t[-1] == 0:
+			del new.t[-1]
 		return new
 	def __str__(self):
 		s = ""
@@ -155,6 +141,8 @@ class Knot:
 	def __str__(self):
 		return str(self.d)
 	def aPoly(self):
+		if len(self.d) < 3:
+			return T(0,0,1,1)
 		gcode = self.gaussCode()
 		m = [[T(0,0,0,1) for x in range(len(self.d))] for y in range(len(self.d))]
 		a = 1
@@ -301,5 +289,9 @@ class Knot:
 		return True
 	def is_unknot(self):
 		simp = self.simplify()
-		return (not simp.code) or not (simp.is_reduced(simp) and simp.is_alternating(simp))
-		
+		if (not simp.code):
+			return True
+		elif simp.is_reduced(simp) and simp.is_alternating(simp):
+			return False
+		return False
+			
