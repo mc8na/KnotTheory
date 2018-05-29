@@ -233,6 +233,9 @@ class Diagram:
 				apoly.t[j-i],apoly.t[j] = apoly.t[j],0
 		while len(apoly.t) > 1 and apoly.t[-1] == 0:
 			del apoly.t[-1]
+		if apoly.t[0] < 0:
+			for j in range(len(apoly.t)):
+				apoly.t[j] *= -1
 		return apoly
 	def det(self,l):
 		n = len(l)
@@ -287,4 +290,38 @@ class Diagram:
 		return self.gaussCode().is_reduced()
 	def isAlternating(self):
 		return self.gaussCode().is_alternating()
+		
+# call: i = diameter( #crossings , (int1,int2,int3,...) )
+# where ints are equal to int cast of region vectors (e.g. [1011] = 11)
+def diameter(crossings,regions):
+	mod = 2**crossings
+	list = {0}
+	print('level 0:\n[' + bin(0)[2:].zfill(crossings) + ']\n' + 'level 1:')
+	for i in regions:
+		list.add(i) 
+		print('[' + bin(i)[2:].zfill(crossings) + '] ')
+	level = 1
+	while len(list) < mod:
+		level += 1
+		buff = set()
+		print('level ' + str(level) + ': ')
+		for i in regions:
+			for j in list:
+				a,b = [],[]
+				x = 0
+				for k in bin(i)[2:].zfill(crossings):
+					a += [int(k)]
+				for k in bin(j)[2:].zfill(crossings):
+					b += [int(k)]
+				for k in range(crossings):
+					if a[k] == 0 and b[k] == 1:				
+						x += 2**(crossings-k-1)
+					elif a[k] == 1 and b[k] == 0:
+						x += 2**(crossings-k-1)
+				if x not in list:
+					if x not in buff:
+						print('[' + bin((x))[2:].zfill(crossings) + '] ')
+					buff.add(x)
+		list.update(buff)
+	return level
 			
