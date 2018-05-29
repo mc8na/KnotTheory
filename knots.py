@@ -305,6 +305,27 @@ def diameter(crossings,regions):
 		level += 1
 		buff = set()
 		print('level ' + str(level) + ': ')
+		for combo in itertools.permutations(regions,level):
+			a,b = [],[]
+			x = 0
+			for k in bin(combo[0])[2:].zfill(crossings):
+				a += [int(k)]
+			for k in bin(combo[1])[2:].zfill(crossings):
+				b += [int(k)]
+			for k in range(crossings):
+				if a[k]+b[k] == 1:
+					x += 2**(crossings-k-1)
+			if x not in list:
+				if x not in buff:
+					print('[' + bin((x))[2:].zfill(crossings) + '] ')
+					buff.add(x)
+		list.update(buff)
+	return level
+	
+	while len(list) < mod:
+		level += 1
+		buff = set()
+		print('level ' + str(level) + ': ')
 		for i in regions:
 			for j in list:
 				a,b = [],[]
@@ -314,14 +335,12 @@ def diameter(crossings,regions):
 				for k in bin(j)[2:].zfill(crossings):
 					b += [int(k)]
 				for k in range(crossings):
-					if a[k] == 0 and b[k] == 1:				
-						x += 2**(crossings-k-1)
-					elif a[k] == 1 and b[k] == 0:
+					if a[k] + b[k] == 1:				
 						x += 2**(crossings-k-1)
 				if x not in list:
 					if x not in buff:
 						print('[' + bin((x))[2:].zfill(crossings) + '] ')
-					buff.add(x)
+						buff.add(x)
 		list.update(buff)
 	return level
-			
+								
