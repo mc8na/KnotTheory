@@ -50,8 +50,9 @@ class T:
 		return new
 	def __str__(self):
 		s = ""
-		for i in range(len(self.t)):
-			s += str(self.t[i]) + "t^" + str(i) + " "
+		s += str(self.t[0])
+		for i in range(1,len(self.t)):
+			s += " + " + str(self.t[i]) + "t^" + str(i)
 		return s
 
 class GCode:
@@ -67,10 +68,92 @@ class GCode:
 				self.code += [(-1 if n < 0 else 1)*self.maxi]
 				self.maxi += 1
 		self.maxi -= 1
+	def rmoves(self): # simplifying moves only for now
+		moves = []
+		d1 = [1,len(self.code)-1]
+		for i in range(1,self.maxi+1):
+			pos1 = self.code.index(i)
+			pos2 = self.code.index(-i)
+			if (pos1-pos2)%len(self.code) in d1:
+				newcode = []
+				for j in range(len(self.code)):
+					if j not in [pos1,pos2]:
+						newcode += [self.code[j]]
+				moves += [GCode(newcode)]
+		for i in range(1,self.maxi+1):
+			pos1 = self.code.index(i-1 if i > 1 else self.maxi)
+			pos2 = self.code.index(-(i-1 if i > 1 else self.maxi))
+			pos3 = self.code.index(i)
+			pos4 = self.code.index(-i)
+			if (pos1-pos3)%len(self.code) in d1 and (pos2-pos4)%len(self.code) in d1:
+				newcode = []
+				for j in range(len(self.code)):
+					if j not in [pos1,pos2,pos3,pos4]:
+						newcode += [self.code[j]]
+				moves += [GCode(newcode)]
+		for combo in itertools.permutations(range(1,self.maxi+1),3):
+			pos1 = self.code.index(combo[0])
+			pos2 = self.code.index(-combo[0])
+			pos3 = self.code.index(combo[1])
+			pos4 = self.code.index(-combo[1])
+			pos5 = self.code.index(combo[2])
+			pos6 = self.code.index(-combo[2])
+			if (pos1-pos3)%len(self.code) in d1 and (pos2-pos6)%len(self.code) in d1 and (pos4-pos5)%len(self.code) in d1:
+				newcode = []
+				for j in range(len(self.code)):
+					if j == pos1:
+						newcode += [combo[1]]
+					elif j == pos2:
+						newcode += [-combo[2]]
+					elif j == pos3:
+						newcode += [combo[0]]
+					elif j == pos4:
+						newcode += [combo[2]]
+					elif j == pos5:
+						newcode += [-combo[1]]
+					elif j == pos6:
+						newcode += [-combo[0]]
+					else:
+						newcode += [self.code[j]]
+				moves += [GCode(newcode)]
+		return moves
+	def simplify(self,verbose=False):
+		simp = GCode(self.code.copy())
+		rlist = self.rmoves()
+		tries = 0
+		while rlist and tries < 100:
+			simp = rlist[0]
+			if verbose:
+				print(simp.code)
+			rlist = simp.rmoves()
+			tries += 1
+		return simp
+	def is_alternating(self):
+		for i in range(len(self.code)):
+			if self.code[i-1]*self.code[i] > 0:
+				return False
+		return True
+	def is_reduced(self):
+		for i in range(1,self.maxi+1):
+			pos1 = self.code.index(i)
+			pos2 = self.code.index(-i)
+			l = self.code[min(pos1,pos2)+1:max(pos1,pos2)]
+			p = [(a,b) for a,b in itertools.permutations(l,2) if abs(a) == abs(b)]
+			if len(l) == len(p):
+				return False
+		return True
+	def is_unknot(self):
+		simp = self.simplify()
+		if (not simp.code):
+			return 1
+		elif simp.is_reduced() and simp.is_alternating():
+			return -1
+		return 0
 	def __str__(self):
 		return str(self.code)
-# k = Knot( ( (index,i,j,k,l),(index,i,j,k,l)... ) , ( (reg1,reg2,reg3),(reg4,reg1)... ) )
-class Knot:
+		
+# k = Diagram( ( (index,i,j,k,l),(index,i,j,k,l)... ) , ( (reg1,reg2,reg3),(reg4,reg1)... ) )
+class Diagram:
 	def __init__(self,pdcode,regions):
 		self.d = {} # maps crossing number to crossing
 		i = 1
@@ -102,33 +185,13 @@ class Knot:
 			dtcode += [pairs[a]]
 		return dtcode
 	def gaussCode(self):
-		list = self.dtCode()
-		t = []
-		for n in range(1,len(list)+1):
-			t += [2*n-1]
-			t += [list[n-1]]
-		gcode = [0] * len(t)
-		for n in range(len(t)):
-			if t[n]%2 == 1:
-				if t[n] <= len(t)//2:
-					if t[n+1] > 0:
-						gcode[t[n]-1] = t[n]
-					else:
-						gcode[t[n]-1] = -t[n]
-				elif t[n+1] > 0:
-					gcode[t[n]-1] = t[n+1]
-				else:
-					gcode[t[n]-1] = -t[n+1]
+		gcode = [0] * (2*len(self.d))
+		for a in self.d:
+			gcode[self.d[a].i-1] = -a
+			if self.d[a].rhr < 0:
+				gcode[self.d[a].j-1] = a
 			else:
-				if t[n] > 0:
-					if t[n] <= len(t)//2:
-						gcode[t[n]-1] = -t[n]
-					else:
-						gcode[t[n]-1] = -t[n-1]
-				elif abs(t[n]) <= len(t)//2:
-					gcode[abs(t[n])-1] = abs(t[n])
-				else:
-					gcode[abs(t[n])-1] = t[n-1]
+				gcode[self.d[a].l-1] = a
 		return GCode(gcode)
 	def isAlternating(self):
 		dt = self.dtCode()
@@ -213,85 +276,15 @@ class Knot:
 				sign *= T(0,0,-1,1)
 				total += mul * self.solve(m, sign * matrix[0][i])
 			return total
-	def rmoves(self,gcode): # simplifying moves only for now
-		moves = []
-		d1 = [1,len(gcode.code)-1]
-		for i in range(1,gcode.maxi+1):
-			pos1 = gcode.code.index(i)
-			pos2 = gcode.code.index(-i)
-			if (pos1-pos2)%len(gcode.code) in d1:
-				newcode = []
-				for j in range(len(gcode.code)):
-					if j not in [pos1,pos2]:
-						newcode += [gcode.code[j]]
-				moves += [GCode(newcode)]
-		for i in range(1,gcode.maxi+1):
-			pos1 = gcode.code.index(i-1 if i > 1 else gcode.maxi)
-			pos2 = gcode.code.index(-(i-1 if i > 1 else gcode.maxi))
-			pos3 = gcode.code.index(i)
-			pos4 = gcode.code.index(-i)
-			if (pos1-pos3)%len(gcode.code) in d1 and (pos2-pos4)%len(gcode.code) in d1:
-				newcode = []
-				for j in range(len(gcode.code)):
-					if j not in [pos1,pos2,pos3,pos4]:
-						newcode += [gcode.code[j]]
-				moves += [GCode(newcode)]
-		for combo in itertools.permutations(range(1,gcode.maxi+1),3):
-			pos1 = gcode.code.index(combo[0])
-			pos2 = gcode.code.index(-combo[0])
-			pos3 = gcode.code.index(combo[1])
-			pos4 = gcode.code.index(-combo[1])
-			pos5 = gcode.code.index(combo[2])
-			pos6 = gcode.code.index(-combo[2])
-			if (pos1-pos3)%len(gcode.code) in d1 and (pos2-pos6)%len(gcode.code) in d1 and (pos4-pos5)%len(gcode.code) in d1:
-				newcode = []
-				for j in range(len(gcode.code)):
-					if j == pos1:
-						newcode += [combo[1]]
-					elif j == pos2:
-						newcode += [-combo[2]]
-					elif j == pos3:
-						newcode += [combo[0]]
-					elif j == pos4:
-						newcode += [combo[2]]
-					elif j == pos5:
-						newcode += [-combo[1]]
-					elif j == pos6:
-						newcode += [-combo[0]]
-					else:
-						newcode += [gcode.code[j]]
-				moves += [GCode(newcode)]
-		return moves
-	def simplify(self,verbose=False):
-		simp = self.gaussCode()
-		rlist = self.rmoves(simp)
-		tries = 0
-		while rlist and tries < 100:
-			simp = rlist[0]
-			if verbose:
-				print(simp.code)
-			rlist = simp.rmoves(simp)
-			tries += 1
-		return simp
-	def is_alternating(self,gcode):
-		for i in range(len(gcode.code)):
-			if gcode.code[i-1]*gcode.code[i] > 0:
-				return False
-		return True
-	def is_reduced(self,gcode):
-		for i in range(1,gcode.maxi+1):
-			pos1 = gcode.code.index(i)
-			pos2 = gcode.code.index(-i)
-			l = gcode.code[min(pos1,pos2)+1:max(pos1,pos2)]
-			p = [(a,b) for a,b in itertools.permutations(l,2) if abs(a) == abs(b)]
-			if len(l) == len(p):
-				return False
-		return True
-	def is_unknot(self):
-		simp = self.simplify()
-		if (not simp.code):
-			return True
-		elif simp.is_reduced(simp) and simp.is_alternating(simp):
-			return False
-		return False
+	def isUnknot(self):
+		u = self.gaussCode().is_unknot()
+		if u > 0:
+			return 'Diagram is the unknot'
+		elif u > 0:
+			return 'Diagram is not the unknot'
+		return 'Unable to determine'
+	def isReduced(self):
+		return self.gaussCode().is_reduced()
+	def isAlternating(self):
+		return self.gaussCode().is_alternating()
 			
