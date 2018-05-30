@@ -339,7 +339,33 @@ def diameter(crossings,regions):
 		real.update(buff)
 	return level
 	
-	
-	
-	
+def region_vectors(self):
+	regions,d2,m = set(),[],len(self.d)
+	for a in range(1,m+1):
+		d2 += [self.d[a].i] + [self.d[a].j] + [self.d[a].k] + [self.d[a].l]
+	for idx in range(len(d2)):
+		reg,a,n = [0]*m,idx,0
+		reg[idx//4] = 1
+			for b in range(len(d2)):
+				if b != a and d2[b] == d[a]:
+					reg[b//4] = 1
+					if b%4 == 0:
+						a = b+3
+					else:
+						a = b-1
+					break
+		while a != idx:
+			for b in range(len(d2)):
+				if b != a and d2[b] == d[a]:
+					reg[b//4] = 1
+					if b%4 == 0:
+						a = b+3
+					else:
+						a = b-1
+					break
+		for y in range(m):
+			if reg[y] == 1:
+				n += 2**(m-y-1)
+		regions.add(n)
+	return regions
 								
