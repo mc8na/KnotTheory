@@ -2,7 +2,7 @@ import functools, itertools
 
 class Crossing:
 	def __init__(self,pdinfo,arcs):
-		self.index,self.i,self.j,self.k,self.l = pdinfo[:]
+		self.i,self.j,self.k,self.l = pdinfo[:]
 		if (self.j%arcs)+1 == self.l:
 			self.rhr = -1
 		else:
@@ -12,10 +12,9 @@ class Crossing:
 			self.i,self.j,self.k,self.l = self.l,self.i,self.j,self.k
 		else:
 			self.i,self.j,self.k,self.l = self.j,self.k,self.l,self.i
-		self.index *= -1
 		self.rhr *= -1
 	def __str__(self):
-		return '{self.index},{self.i},{self.j},{self.k},{self.i}'
+		return '{self.i},{self.j},{self.k},{self.l}'
 
 class T:
 	def __init__(self,c,e,i,n):
@@ -152,22 +151,18 @@ class GCode:
 	def __str__(self):
 		return str(self.code)
 		
-# k = Diagram( ( (index,i,j,k,l),(index,i,j,k,l)... ) , ( (reg1,reg2,reg3),(reg4,reg1)... ) )
+# k = Diagram( ( (i,j,k,l),(i,j,k,l)... ) )
 class Diagram:
-	def __init__(self,pdcode,regions):
+	def __init__(self,pdcode):
 		self.d = {} # maps crossing number to crossing
 		i = 1
 		for n in pdcode:
 			c = Crossing(n,len(pdcode)*2)
 			self.d[i] = c
 			i += 1
-		self.r = {} # maps region number to list of numbers of bordering crossing
-		i = 1
-		for n in regions:
-			self.r[i] = n[:]
-	def rcc(self,i): # RCC move on region i
-		for n in self.r[i]:
-			self.d[n].cc()
+	#def rcc(self,i): # RCC move on region i
+		#for n in self.r[i]:
+			#self.d[n].cc()
 	def dtCode(self):
 		pairs = {}
 		for a in self.d:
@@ -290,10 +285,87 @@ class Diagram:
 		return self.gaussCode().is_reduced()
 	def isAlternating(self):
 		return self.gaussCode().is_alternating()
-		
-# call: i = diameter( #crossings , (int1,int2,int3,...) )
+	def region_vectors(self):
+		regions,d2,numc = set(),[],len(self.d)
+		for a in range(1,numc+1):
+			d2 += [self.d[a].i] + [self.d[a].j] + [self.d[a].k] + [self.d[a].l]
+		for idx in range(len(d2)):
+			reg,a,n = [0]*numc,idx,0
+			reg[idx//4] = 1
+			temp,d2[a] = d2[a],0
+			b = d2.index(temp)
+			d2[a] = temp
+			reg[b//4] = 1
+			if b%4 == 0:
+				a = b+3
+			else:
+				a = b-1
+			while a != idx:
+				temp,d2[a] = d2[a],0
+				b = d2.index(temp)
+				d2[a] = temp
+				reg[b//4] = 1
+				if b%4 == 0:
+					a = b+3
+				else:
+					a = b-1
+			for y in range(numc):
+				if reg[y] == 1:
+					n += 2**(numc-y-1)
+			regions.add(n)
+		return regions
+	def diameter(self):
+		crossings = len(self.d)
+		regions = self.region_vectors()	
+		mod = 2**crossings
+		real = {0}
+		print('level 0:\n[' + bin(0)[2:].zfill(crossings) + ']\n\n' + 'level 1:')
+		for i in regions:
+			real.add(i) 
+			print('[' + bin(i)[2:].zfill(crossings) + '] ')
+		level = 1
+		while len(real) < mod:
+			level += 1
+			print('\nlevel ' + str(level) + ': ')
+			for combo in itertools.permutations(regions,level):
+				x,y,s = [0]*crossings,0,""
+				for i in range(level):
+					if i > 0:
+						s += " + "
+					a = list(bin(combo[i])[2:].zfill(crossings))
+					for j in range(crossings):
+						x[j] += int(a[j])
+						s += a[j]
+				for i in range(crossings):
+					if x[i]%2 == 1:
+						y += 2**(crossings-i-1)
+				if y not in real:
+					print('[' + bin((y))[2:].zfill(crossings) + '] = ' + s)
+					real.add(y)
+		return level
+	
+		while len(list) < mod:
+			level += 1
+			buff = set()
+			print('level ' + str(level) + ': ')
+			for i in regions:
+				for j in real:
+					x = 0
+					a = list(bin(i)[2:].zfill(crossings))
+					b = list(bin(j)[2:].zfill(crossings))
+					for k in range(crossings):
+						if a[k] != b[k]:				
+							x += 2**(crossings-k-1)
+					buff.add(x)
+			for p in buff-real:
+				print('[' + bin((p))[2:].zfill(crossings) + '] ')
+			real.update(buff)
+		return level
+
+# call: i = diam( #crossings , (int1,int2,int3,...) )
 # where ints are equal to int cast of region vectors (e.g. [1011] = 11)
-def diameter(crossings,regions):
+def diam(crossings,regions):
+		
 	mod = 2**crossings
 	real = {0}
 	print('level 0:\n[' + bin(0)[2:].zfill(crossings) + ']\n\n' + 'level 1:')
@@ -338,34 +410,5 @@ def diameter(crossings,regions):
 			print('[' + bin((p))[2:].zfill(crossings) + '] ')
 		real.update(buff)
 	return level
-	
-def region_vectors(self):
-	regions,d2,m = set(),[],len(self.d)
-	for a in range(1,m+1):
-		d2 += [self.d[a].i] + [self.d[a].j] + [self.d[a].k] + [self.d[a].l]
-	for idx in range(len(d2)):
-		reg,a,n = [0]*m,idx,0
-		reg[idx//4] = 1
-			for b in range(len(d2)):
-				if b != a and d2[b] == d[a]:
-					reg[b//4] = 1
-					if b%4 == 0:
-						a = b+3
-					else:
-						a = b-1
-					break
-		while a != idx:
-			for b in range(len(d2)):
-				if b != a and d2[b] == d[a]:
-					reg[b//4] = 1
-					if b%4 == 0:
-						a = b+3
-					else:
-						a = b-1
-					break
-		for y in range(m):
-			if reg[y] == 1:
-				n += 2**(m-y-1)
-		regions.add(n)
-	return regions
+
 								
