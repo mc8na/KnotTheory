@@ -246,11 +246,11 @@ class Diagram:
 						if (m == t):
 							u = 0
 						else:
-							d[t1].append(m[t1][m])
+							d[t1].append(l[t1][m])
 						m += 1
 					t1 += 1
 				l1 = [d[x] for x in d]
-				sum = sum + i*(l[0][t])*(det(l1))
+				sum = sum + i*(l[0][t])*(self.det(l1))
 				i = i*T(0,0,-1,1)
 				t += 1
 			return sum
