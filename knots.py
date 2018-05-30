@@ -295,31 +295,30 @@ class Diagram:
 # where ints are equal to int cast of region vectors (e.g. [1011] = 11)
 def diameter(crossings,regions):
 	mod = 2**crossings
-	list = {0}
-	print('level 0:\n[' + bin(0)[2:].zfill(crossings) + ']\n' + 'level 1:')
+	real = {0}
+	print('level 0:\n[' + bin(0)[2:].zfill(crossings) + ']\n\n' + 'level 1:')
 	for i in regions:
-		list.add(i) 
+		real.add(i) 
 		print('[' + bin(i)[2:].zfill(crossings) + '] ')
 	level = 1
-	while len(list) < mod:
+	while len(real) < mod:
 		level += 1
-		buff = set()
-		print('level ' + str(level) + ': ')
+		print('\nlevel ' + str(level) + ': ')
 		for combo in itertools.permutations(regions,level):
-			a,b = [],[]
-			x = 0
-			for k in bin(combo[0])[2:].zfill(crossings):
-				a += [int(k)]
-			for k in bin(combo[1])[2:].zfill(crossings):
-				b += [int(k)]
-			for k in range(crossings):
-				if a[k]+b[k] == 1:
-					x += 2**(crossings-k-1)
-			if x not in list:
-				if x not in buff:
-					print('[' + bin((x))[2:].zfill(crossings) + '] ')
-					buff.add(x)
-		list.update(buff)
+			x,y,s = [0]*crossings,0,""
+			for i in range(level):
+				if i > 0:
+					s += " + "
+				a = list(bin(combo[i])[2:].zfill(crossings))
+				for j in range(crossings):
+					x[j] += int(a[j])
+					s += a[j]
+			for i in range(crossings):
+				if x[i]%2 == 1:
+					y += 2**(crossings-i-1)
+			if y not in real:
+				print('[' + bin((y))[2:].zfill(crossings) + '] = ' + s)
+				real.add(y)
 	return level
 	
 	while len(list) < mod:
@@ -327,20 +326,20 @@ def diameter(crossings,regions):
 		buff = set()
 		print('level ' + str(level) + ': ')
 		for i in regions:
-			for j in list:
-				a,b = [],[]
+			for j in real:
 				x = 0
-				for k in bin(i)[2:].zfill(crossings):
-					a += [int(k)]
-				for k in bin(j)[2:].zfill(crossings):
-					b += [int(k)]
+				a = list(bin(i)[2:].zfill(crossings))
+				b = list(bin(j)[2:].zfill(crossings))
 				for k in range(crossings):
-					if a[k] + b[k] == 1:				
+					if a[k] != b[k]:				
 						x += 2**(crossings-k-1)
-				if x not in list:
-					if x not in buff:
-						print('[' + bin((x))[2:].zfill(crossings) + '] ')
-						buff.add(x)
-		list.update(buff)
+				buff.add(x)
+		for p in buff-real:
+			print('[' + bin((p))[2:].zfill(crossings) + '] ')
+		real.update(buff)
 	return level
+	
+	
+	
+	
 								
