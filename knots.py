@@ -392,23 +392,4 @@ def diam(crossings,regions):
 				print('[' + bin((y))[2:].zfill(crossings) + '] = ' + s)
 				real.add(y)
 	return level
-	
-	while len(list) < mod:
-		level += 1
-		buff = set()
-		print('level ' + str(level) + ': ')
-		for i in regions:
-			for j in real:
-				x = 0
-				a = list(bin(i)[2:].zfill(crossings))
-				b = list(bin(j)[2:].zfill(crossings))
-				for k in range(crossings):
-					if a[k] != b[k]:				
-						x += 2**(crossings-k-1)
-				buff.add(x)
-		for p in buff-real:
-			print('[' + bin((p))[2:].zfill(crossings) + '] ')
-		real.update(buff)
-	return level
-
 								
