@@ -189,6 +189,7 @@ class Diagram:
 				gcode[self.d[a].l-1] = a
 		return GCode(gcode)
 	def isAlternating(self):
+		#return self.gaussCode().is_alternating()
 		dt = self.dtCode()
 		for n in range(len(dt)):
 			if dt[n-1]*dt[n] < 0:
@@ -229,8 +230,9 @@ class Diagram:
 		while len(apoly.t) > 1 and apoly.t[-1] == 0:
 			del apoly.t[-1]
 		if apoly.t[0] < 0:
-			for j in range(len(apoly.t)):
-				apoly.t[j] *= -1
+			apoly.t *= T(0,0,-1,1)
+			#for j in range(len(apoly.t)):
+			#	apoly.t[j] *= -1
 		return apoly
 	def det(self,l):
 		n = len(l)
@@ -319,14 +321,32 @@ class Diagram:
 		regions = self.region_vectors()	
 		mod = 2**crossings
 		real = {0}
-		print('level 0:\n[' + bin(0)[2:].zfill(crossings) + ']\n\n' + 'level 1:')
+		#print('level 0:\n[' + bin(0)[2:].zfill(crossings) + ']\n\n' + 'level 1:')
 		for i in regions:
 			real.add(i) 
-			print('[' + bin(i)[2:].zfill(crossings) + '] ')
+			#print('[' + bin(i)[2:].zfill(crossings) + '] ')
 		level = 1
 		while len(real) < mod:
 			level += 1
-			print('\nlevel ' + str(level) + ': ')
+			buff = set()
+			#print('\nlevel ' + str(level) + ': ')
+			for i in regions:
+				for j in real:
+					x = 0
+					a = list(bin(i)[2:].zfill(crossings))
+					b = list(bin(j)[2:].zfill(crossings))
+					for k in range(crossings):
+						if a[k] != b[k]:				
+							x += 2**(crossings-k-1)
+					buff.add(x)
+			#for p in buff-real:
+				#print('[' + bin((p))[2:].zfill(crossings) + '] ')
+			real.update(buff)
+		return level
+		
+		while len(real) < mod:
+			level += 1
+			#print('\nlevel ' + str(level) + ': ')
 			for combo in itertools.permutations(regions,level):
 				x,y,s = [0]*crossings,0,""
 				for i in range(level):
@@ -339,28 +359,11 @@ class Diagram:
 				for i in range(crossings):
 					if x[i]%2 == 1:
 						y += 2**(crossings-i-1)
-				if y not in real:
-					print('[' + bin((y))[2:].zfill(crossings) + '] = ' + s)
-					real.add(y)
+				#if y not in real:
+					#print('[' + bin((y))[2:].zfill(crossings) + '] = ' + s)
+				real.add(y)
 		return level
-	
-		while len(list) < mod:
-			level += 1
-			buff = set()
-			print('level ' + str(level) + ': ')
-			for i in regions:
-				for j in real:
-					x = 0
-					a = list(bin(i)[2:].zfill(crossings))
-					b = list(bin(j)[2:].zfill(crossings))
-					for k in range(crossings):
-						if a[k] != b[k]:				
-							x += 2**(crossings-k-1)
-					buff.add(x)
-			for p in buff-real:
-				print('[' + bin((p))[2:].zfill(crossings) + '] ')
-			real.update(buff)
-		return level
+		
 
 # call: i = diam( #crossings , (int1,int2,int3,...) )
 # where ints are equal to int cast of region vectors (e.g. [1011] = 11)
@@ -392,4 +395,25 @@ def diam(crossings,regions):
 				print('[' + bin((y))[2:].zfill(crossings) + '] = ' + s)
 				real.add(y)
 	return level
+	
+def convert(pdcode):
+	d,s,b = {},"Diagram((",[]
+	for e in pdcode:
+		if 1 in e and 2 not in e:
+			i = e.index(1)
+			m = e[i-1]+e[i-3]
+			d[m] = e
+			b += [m]
+		else:
+			m = min(e[0]+e[2],e[1]+e[3])
+			d[m] = e
+			b += [m]
+	for i in sorted(b):
+		if i > 3:
+			s += ","
+		s += "(" + str(d[i][0]) + "," + str(d[i][1]) + "," + str(d[i][2]) + "," + str(d[i][3]) + ")"
+	s += "))"
+	return s
+		
+		
 								
