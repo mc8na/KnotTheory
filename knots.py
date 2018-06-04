@@ -227,7 +227,6 @@ class Diagram:
 		for n in range(len(m)):
 			del m[n][len(m)]
 		apoly = self.det(m)
-		#apoly = self.solve(m,T(0,0,1,1))
 		i = 0
 		while i < len(apoly.t) and apoly.t[i] == 0:
 			i += 1
@@ -263,24 +262,6 @@ class Diagram:
 			return sum
 		else:
 			return(l[0][0]*l[1][1]-l[0][1]*l[1][0])
-	def solve(self,matrix,mul):
-		width = len(matrix)
-		if width == 1:
-			return mul * matrix[0][0]
-		else:
-			sign = T(0,0,-1,1)
-			total = T(0,0,0,1)
-			for i in range(width):
-				m = []
-				for j in range(1,width):
-					buff = []
-					for k in range(width):
-						if k != i:
-							buff.append(matrix[j][k])
-					m.append(buff)
-				sign *= T(0,0,-1,1)
-				total += mul * self.solve(m, sign * matrix[0][i])
-			return total
 	def isUnknot(self):
 		u = self.gaussCode().is_unknot()
 		if u > 0:
@@ -369,16 +350,17 @@ class Diagram:
 				real.add(y)
 		return level
 
-import operator as op
-def ncr(n, r): # modified method to return nCr, n choose r
+def ncr(n, r): # modified method to return n choose r
     if r > n//2:
     	return 0
-    k = min(r, n-r)
-    numer = functools.reduce(op.mul, range(n, n-k, -1), 1)
-    denom = functools.reduce(op.mul, range(1, k+1), 1)
+    if r == 0 or r == n:
+    	return 1
+    k,c = min(r, n-r),1
+    for i in range(k):
+    	c *= ((n-i)/(i+1))
     if 2*r == n:
-    	return numer//(2*denom)
-    return numer//denom		
+    	return c//2
+    return c		
 def lower_bound(b,w): # returns minimum number of RCC moves needed to generate sufficient number of diagrams
 	sum,k = 0,-1
 	while sum < 2**(b+w-2):
