@@ -1,5 +1,16 @@
 import functools, itertools
 
+import operator as op
+def ncr(n, r):
+    if r > n//2:
+    	return 0
+    k = min(r, n-r)
+    numer = functools.reduce(op.mul, range(n, n-k, -1), 1)
+    denom = functools.reduce(op.mul, range(1, k+1), 1)
+    if 2*r == n:
+    	return numer//(2*denom)
+    return numer//denom
+
 class Crossing:
 	def __init__(self,pdinfo,arcs):
 		self.i,self.j,self.k,self.l = pdinfo[:]
@@ -364,41 +375,26 @@ class Diagram:
 				real.add(y)
 		return level
 		
-		
-		
-		
-		
-
-# call: i = diam( #crossings , (int1,int2,int3,...) )
-# where ints are equal to int cast of region vectors (e.g. [1011] = 11)
-def diam(crossings,regions):
-		
-	mod = 2**crossings
-	real = {0}
-	print('level 0:\n[' + bin(0)[2:].zfill(crossings) + ']\n\n' + 'level 1:')
-	for i in regions:
-		real.add(i) 
-		print('[' + bin(i)[2:].zfill(crossings) + '] ')
-	level = 1
-	while len(real) < mod:
-		level += 1
-		print('\nlevel ' + str(level) + ': ')
-		for combo in itertools.permutations(regions,level):
-			x,y,s = [0]*crossings,0,""
-			for i in range(level):
-				if i > 0:
-					s += " + "
-				a = list(bin(combo[i])[2:].zfill(crossings))
-				for j in range(crossings):
-					x[j] += int(a[j])
-					s += a[j]
-			for i in range(crossings):
-				if x[i]%2 == 1:
-					y += 2**(crossings-i-1)
-			if y not in real:
-				print('[' + bin((y))[2:].zfill(crossings) + '] = ' + s)
-				real.add(y)
-	return level
+def lower_bound(b,w):
+	sum,k = 0,-1
+	while sum < 2**(b+w-2):
+		k += 1
+		for i in range(0,k+1):
+			sum += ncr(b,k-i)*ncr(w,i)
+	return k
+def min_diameter():
+	for i in range(3,13):
+		j = 0
+		if i%2 == 1:
+			j = 2
+		else:
+			j = 3
+		while j <= (i+2)//2:
+			lb = lower_bound(j,i+2-j)
+			print('Minimum diameter for ' + str(j) + ' black and ' + str(i+2-j) + ' white regions is ' + str(lb))
+			j += 1
+	return None
+			
 	
 def convert(pdcode):
 	d,s,b = {},"Diagram((",[]
@@ -419,5 +415,5 @@ def convert(pdcode):
 	s += "))"
 	return s
 		
-		
+
 								

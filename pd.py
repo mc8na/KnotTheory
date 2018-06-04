@@ -1963,9 +1963,9 @@ def print_all():
 		print(str(key) + ' = ' + str(d[key].diameter()))
 
 def print_to_file():
-	f = open("write.txt","w")
+	#f = open("write.txt","w")
 	for key in d:
 		i = d[key].diameter()
-		f.write(str(key) + " = " + str(i) + "\n")
+		#f.write(str(key) + " = " + str(i) + "\n")
 		print(str(key) + " = " + str(i))
 	f.close()
