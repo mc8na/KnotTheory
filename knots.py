@@ -346,7 +346,7 @@ class Diagram:
 		
 		while len(real) < mod:
 			level += 1
-			#print('\nlevel ' + str(level) + ': ')
+			print('\nlevel ' + str(level) + ': ')
 			for combo in itertools.permutations(regions,level):
 				x,y,s = [0]*crossings,0,""
 				for i in range(level):
@@ -359,10 +359,14 @@ class Diagram:
 				for i in range(crossings):
 					if x[i]%2 == 1:
 						y += 2**(crossings-i-1)
-				#if y not in real:
-					#print('[' + bin((y))[2:].zfill(crossings) + '] = ' + s)
+				if y not in real:
+					print('[' + bin((y))[2:].zfill(crossings) + '] = ' + s)
 				real.add(y)
 		return level
+		
+		
+		
+		
 		
 
 # call: i = diam( #crossings , (int1,int2,int3,...) )
