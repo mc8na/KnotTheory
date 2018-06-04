@@ -1,38 +1,28 @@
 import functools, itertools
 
-import operator as op
-def ncr(n, r):
-    if r > n//2:
-    	return 0
-    k = min(r, n-r)
-    numer = functools.reduce(op.mul, range(n, n-k, -1), 1)
-    denom = functools.reduce(op.mul, range(1, k+1), 1)
-    if 2*r == n:
-    	return numer//(2*denom)
-    return numer//denom
-
-class Crossing:
+class Crossing: # Crossing for pdcode, holds i,j,k,l and sign (right hand rule)
 	def __init__(self,pdinfo,arcs):
 		self.i,self.j,self.k,self.l = pdinfo[:]
 		if (self.j%arcs)+1 == self.l:
 			self.rhr = -1
 		else:
 			self.rhr = 1
-	def cc(self):
+	def cc(self): # crossing change
 		if self.rhr > 0:
 			self.i,self.j,self.k,self.l = self.l,self.i,self.j,self.k
 		else:
 			self.i,self.j,self.k,self.l = self.j,self.k,self.l,self.i
 		self.rhr *= -1
 	def __str__(self):
-		return '{self.i},{self.j},{self.k},{self.l}'
+		return '(' + str(self.i) + ',' + str(self.j) + ',' + str(self.k) + ',' + str(self.l) + ')'
 
-class T:
-	def __init__(self,c,e,i,n):
+class T: # T variable used in aPoly() function to compute Alexander Polynomial
+	def __init__(self,c,e,i,n): # creates list with indices corresponding to exponents
+								# and values corresponding to coefficients of terms
 		self.t = [0]*n
 		self.t[0] += i
 		self.t[e] += c
-	def __add__(self,other):
+	def __add__(self,other): # Add one instance of T to another
 		new = T(0,0,0,max(len(self.t),len(other.t)))
 		for i in range(len(self.t)):
 			new.t[i] += self.t[i]
@@ -41,7 +31,7 @@ class T:
 		while len(new.t) > 1 and new.t[-1] == 0:
 			del new.t[-1]
 		return new
-	def __sub__(self,other):
+	def __sub__(self,other): # Subtract one instance of T from another
 		new = T(0,0,0,max(len(self.t),len(other.t)))
 		for i in range(len(self.t)):
 			new.t[i] += self.t[i]
@@ -50,7 +40,7 @@ class T:
 		while len(new.t) > 1 and new.t[-1] == 0:
 			del new.t[-1]
 		return new
-	def __mul__(self,other):
+	def __mul__(self,other): # Multiply one instance of T to another
 		new = T(0,0,0,len(self.t)+len(other.t)-1)
 		for i in range(len(self.t)):
 			for j in range(len(other.t)):
@@ -58,7 +48,7 @@ class T:
 		while len(new.t) > 1 and new.t[-1] == 0:
 			del new.t[-1]
 		return new
-	def __str__(self):
+	def __str__(self): 
 		s = ""
 		s += str(self.t[0])
 		for i in range(1,len(self.t)):
@@ -127,7 +117,7 @@ class GCode:
 						newcode += [self.code[j]]
 				moves += [GCode(newcode)]
 		return moves
-	def simplify(self,verbose=False):
+	def simplify(self,verbose=False): # attempts to simplify the Gauss Code using R-moves
 		simp = GCode(self.code.copy())
 		rlist = self.rmoves()
 		tries = 0
@@ -138,12 +128,12 @@ class GCode:
 			rlist = simp.rmoves()
 			tries += 1
 		return simp
-	def is_alternating(self):
+	def is_alternating(self): # returns whether the GCode corresponds to an alternating Diagram
 		for i in range(len(self.code)):
 			if self.code[i-1]*self.code[i] > 0:
 				return False
 		return True
-	def is_reduced(self):
+	def is_reduced(self): # returns whether the GCode corresponds to a reduced Diagram
 		for i in range(1,self.maxi+1):
 			pos1 = self.code.index(i)
 			pos2 = self.code.index(-i)
@@ -152,7 +142,7 @@ class GCode:
 			if len(l) == len(p):
 				return False
 		return True
-	def is_unknot(self):
+	def is_unknot(self): # returns whether the GCode corresponds to a Diagram of the unknot
 		simp = self.simplify()
 		if (not simp.code):
 			return 1
@@ -174,7 +164,7 @@ class Diagram:
 	#def rcc(self,i): # RCC move on region i
 		#for n in self.r[i]:
 			#self.d[n].cc()
-	def dtCode(self):
+	def dtCode(self): # returns an ordered list containing the DT Code of the Diagram
 		pairs = {}
 		for a in self.d:
 			if self.d[a].i%2 == 1:
@@ -190,7 +180,7 @@ class Diagram:
 		for a in sorted(pairs):
 			dtcode += [pairs[a]]
 		return dtcode
-	def gaussCode(self):
+	def gaussCode(self): # returns instance of GCode corresponding to Gauss Code of the Diagram
 		gcode = [0] * (2*len(self.d))
 		for a in self.d:
 			gcode[self.d[a].i-1] = -a
@@ -199,7 +189,7 @@ class Diagram:
 			else:
 				gcode[self.d[a].l-1] = a
 		return GCode(gcode)
-	def isAlternating(self):
+	def isAlternating(self): # returns whether the Diagram is alternating
 		#return self.gaussCode().is_alternating()
 		dt = self.dtCode()
 		for n in range(len(dt)):
@@ -208,9 +198,15 @@ class Diagram:
 		return True
 	def copy(self):
 		return Knot(self.d.copy())
-	def __str__(self):
-		return str(self.d)
-	def aPoly(self):
+	def __str__(self): # returns the pdcode of the Diagram in string form
+		s = "("
+		for key in self.d:
+			if key != 1:
+				s += ","
+			s += str(self.d[key])
+		s += ')'
+		return s
+	def aPoly(self): # computes the Alexander Polynomial of the Diagram
 		if len(self.d) < 3:
 			return T(0,0,1,1)
 		gcode = self.gaussCode()
@@ -241,11 +237,9 @@ class Diagram:
 		while len(apoly.t) > 1 and apoly.t[-1] == 0:
 			del apoly.t[-1]
 		if apoly.t[0] < 0:
-			apoly.t *= T(0,0,-1,1)
-			#for j in range(len(apoly.t)):
-			#	apoly.t[j] *= -1
+			apoly *= T(0,0,-1,1)
 		return apoly
-	def det(self,l):
+	def det(self,l): # returns the determinant of matrix l
 		n = len(l)
 		if (n>2):
 			i,t,sum = T(0,0,1,1),0,T(0,0,0,1)
@@ -291,7 +285,7 @@ class Diagram:
 		u = self.gaussCode().is_unknot()
 		if u > 0:
 			return 'Diagram is the unknot'
-		elif u > 0:
+		elif u < 0:
 			return 'Diagram is not the unknot'
 		return 'Unable to determine'
 	def isReduced(self):
@@ -374,15 +368,25 @@ class Diagram:
 					print('[' + bin((y))[2:].zfill(crossings) + '] = ' + s)
 				real.add(y)
 		return level
-		
-def lower_bound(b,w):
+
+import operator as op
+def ncr(n, r): # modified method to return nCr, n choose r
+    if r > n//2:
+    	return 0
+    k = min(r, n-r)
+    numer = functools.reduce(op.mul, range(n, n-k, -1), 1)
+    denom = functools.reduce(op.mul, range(1, k+1), 1)
+    if 2*r == n:
+    	return numer//(2*denom)
+    return numer//denom		
+def lower_bound(b,w): # returns minimum number of RCC moves needed to generate sufficient number of diagrams
 	sum,k = 0,-1
 	while sum < 2**(b+w-2):
 		k += 1
 		for i in range(0,k+1):
 			sum += ncr(b,k-i)*ncr(w,i)
 	return k
-def min_diameter():
+def min_diameter(): 
 	for i in range(3,13):
 		j = 0
 		if i%2 == 1:
@@ -394,9 +398,8 @@ def min_diameter():
 			print('Minimum diameter for ' + str(j) + ' black and ' + str(i+2-j) + ' white regions is ' + str(lb))
 			j += 1
 	return None
-			
 	
-def convert(pdcode):
+def convert(pdcode): # puts entries from pdcode in order in which they are encountered in traversal
 	d,s,b = {},"Diagram((",[]
 	for e in pdcode:
 		if 1 in e and 2 not in e:
@@ -414,6 +417,4 @@ def convert(pdcode):
 		s += "(" + str(d[i][0]) + "," + str(d[i][1]) + "," + str(d[i][2]) + "," + str(d[i][3]) + ")"
 	s += "))"
 	return s
-		
-
-								
+							
