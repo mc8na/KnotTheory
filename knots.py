@@ -14,7 +14,7 @@ class Crossing: # Crossing for pdcode, holds i,j,k,l and sign (right hand rule)
 			self.i,self.j,self.k,self.l = self.j,self.k,self.l,self.i
 		self.rhr *= -1
 	def __str__(self):
-		return '(' + str(self.i) + ',' + str(self.j) + ',' + str(self.k) + ',' + str(self.l) + ')'
+		return '[' + str(self.i) + ',' + str(self.j) + ',' + str(self.k) + ',' + str(self.l) + ']'
 
 class T: # T variable used in aPoly() function to compute Alexander Polynomial
 	def __init__(self,c,e,i,n): # creates list with indices corresponding to exponents
@@ -52,7 +52,10 @@ class T: # T variable used in aPoly() function to compute Alexander Polynomial
 		s = ""
 		s += str(self.t[0])
 		for i in range(1,len(self.t)):
-			s += " + " + str(self.t[i]) + "t^" + str(i)
+			if self.t[i] < 0:
+				s += " - " + str(-1*self.t[i]) + "t^" + str(i)
+			elif self.t[i] > 0:
+				s += " + " + str(self.t[i]) + "t^" + str(i)
 		return s
 
 class GCode:
@@ -198,13 +201,18 @@ class Diagram:
 		return True
 	def copy(self):
 		return Knot(self.d.copy())
-	def __str__(self): # returns the pdcode of the Diagram in string form
-		s = "("
+	def code(self): # returns a list with elements [i,j,k,l] for all crossings
+		l = []
+		for idx in self.d:
+			l += [[self.d[idx].i,self.d[idx].j,self.d[idx].k,self.d[idx].l]]
+		return l
+	def __str__(self): # returns the PD Code of the Diagram in string form
+		s = "["
 		for key in self.d:
 			if key != 1:
 				s += ","
 			s += str(self.d[key])
-		s += ')'
+		s += ']'
 		return s
 	def aPoly(self): # computes the Alexander Polynomial of the Diagram
 		if len(self.d) < 3:
@@ -302,9 +310,89 @@ class Diagram:
 					n += 2**(numc-y-1)
 			regions.add(n)
 		return regions
+	def region_freeze_vectors(self):
+		regions,d2,numc = set(),[],len(self.d)
+		for a in range(1,numc+1):
+			d2 += [self.d[a].i] + [self.d[a].j] + [self.d[a].k] + [self.d[a].l]
+		for idx in range(len(d2)):
+			reg,a,n = [1]*numc,idx,0
+			reg[idx//4] = 0
+			temp,d2[a] = d2[a],0
+			b = d2.index(temp)
+			d2[a] = temp
+			reg[b//4] = 0
+			if b%4 == 0:
+				a = b+3
+			else:
+				a = b-1
+			while a != idx:
+				temp,d2[a] = d2[a],0
+				b = d2.index(temp)
+				d2[a] = temp
+				reg[b//4] = 0
+				if b%4 == 0:
+					a = b+3
+				else:
+					a = b-1
+			for y in range(numc):
+				if reg[y] == 1:
+					n += 2**(numc-y-1)
+			regions.add(n)
+		return regions
 	def diameter(self):
 		crossings = len(self.d)
-		regions = self.region_vectors()	
+		regions = self.region_vectors()
+		mod = 2**crossings
+		real = {0}
+		for i in regions:
+			real.add(i)
+		level = 1
+		while len(real) < mod:
+			level += 1
+			buff = set()
+			for i in regions:
+				for j in real:
+					x = 0
+					a = list(bin(i)[2:].zfill(crossings))
+					b = list(bin(j)[2:].zfill(crossings))
+					for k in range(crossings):
+						if a[k] != b[k]:				
+							x += 2**(crossings-k-1)
+					buff.add(x)
+			real.update(buff)
+		return level
+	def ediameter(self):
+		crossings = len(self.d)
+		regions = self.region_vectors()
+		mod = 2**crossings
+		real = {0}
+		print('level 0:\n[' + bin(0)[2:].zfill(crossings) + ']\n\n' + 'level 1:')
+		for i in regions:
+			real.add(i) 
+			print('[' + bin(i)[2:].zfill(crossings) + '] ')
+		level = 1
+		while len(real) < mod:
+			level += 1
+			print('\nlevel ' + str(level) + ': ')
+			for combo in itertools.permutations(regions,level):
+				x,y,s = [0]*crossings,0,""
+				for i in range(level):
+					if i > 0:
+						s += " + "
+					a = list(bin(combo[i])[2:].zfill(crossings))
+					for j in range(crossings):
+						x[j] += int(a[j])
+						s += a[j]
+				for i in range(crossings):
+					if x[i]%2 == 1:
+						y += 2**(crossings-i-1)
+				if y not in real:
+					print('[' + bin((y))[2:].zfill(crossings) + '] = ' + s)
+					real.add(y)
+		return level
+	def freeze_diameter(self):
+		crossings = len(self.d)
+		regions = self.region_freeze_vectors()	
 		mod = 2**crossings
 		real = {0}
 		#print('level 0:\n[' + bin(0)[2:].zfill(crossings) + ']\n\n' + 'level 1:')
@@ -329,28 +417,30 @@ class Diagram:
 				#print('[' + bin((p))[2:].zfill(crossings) + '] ')
 			real.update(buff)
 		return level
-		
-		while len(real) < mod:
+	def distance(self,d):
+		regions = self.region_vectors()
+		real,level,crossings = {0},0,len(self.d)
+		while d not in real:
 			level += 1
-			print('\nlevel ' + str(level) + ': ')
-			for combo in itertools.permutations(regions,level):
-				x,y,s = [0]*crossings,0,""
-				for i in range(level):
-					if i > 0:
-						s += " + "
-					a = list(bin(combo[i])[2:].zfill(crossings))
-					for j in range(crossings):
-						x[j] += int(a[j])
-						s += a[j]
-				for i in range(crossings):
-					if x[i]%2 == 1:
-						y += 2**(crossings-i-1)
-				if y not in real:
-					print('[' + bin((y))[2:].zfill(crossings) + '] = ' + s)
-				real.add(y)
+			buff = set()
+			for i in regions:
+				for j in real:
+					x = 0
+					a = list(bin(i)[2:].zfill(crossings))
+					b = list(bin(j)[2:].zfill(crossings))
+					for k in range(crossings):
+						if a[k] != b[k]:				
+							x += 2**(crossings-k-1)
+					if x == d:
+						return level
+					buff.add(x)
+			real.update(buff)
 		return level
+	def mirror_distance(self):
+		mod = 2**(len(self.d))-1
+		return self.distance(mod)
 
-def ncr(n, r): # modified method to return n choose r
+def ncr(n, r): # modified method to return n choose r for lower_bound
     if r > n//2:
     	return 0
     if r == 0 or r == n:
@@ -368,7 +458,7 @@ def lower_bound(b,w): # returns minimum number of RCC moves needed to generate s
 		for i in range(0,k+1):
 			sum += ncr(b,k-i)*ncr(w,i)
 	return k
-def min_diameter(): 
+def min_diameter(): # finds and prints the minimum diameter for reduced Diagrams up to 12 crossings
 	for i in range(3,13):
 		j = 0
 		if i%2 == 1:
@@ -380,6 +470,32 @@ def min_diameter():
 			print('Minimum diameter for ' + str(j) + ' black and ' + str(i+2-j) + ' white regions is ' + str(lb))
 			j += 1
 	return None
+	
+def one_reducible():
+	for i in range(3,13):
+		b = 0
+		if i%2 == 1:
+			b = 2
+		else:
+			b = 3
+		while b <= (i+2)//2:
+			w = i+2-b
+			print('When B = ' + str(b) + ' and W = ' + str(w))
+			for b1 in range(b//2+1):
+				for w1 in range(w//2+1):
+					print('When B1 = ' + str(b1) + ' and W1 = ' + str(w1))
+					p = b1+w1
+					print('P1 = ' + str(p))
+					p = b-b1+w1
+					print('P2 = ' + str(p))
+					p = b1+w-w1+1
+					print('P3 = ' + str(p))
+					p = b-b1+w-w1-1
+					print('P4 = ' + str(p))
+					w1 += 1
+				b1 += 1
+			print('\n')
+			b += 1
 	
 def convert(pdcode): # puts entries from pdcode in order in which they are encountered in traversal
 	d,s,b = {},"Diagram((",[]
@@ -399,4 +515,64 @@ def convert(pdcode): # puts entries from pdcode in order in which they are encou
 		s += "(" + str(d[i][0]) + "," + str(d[i][1]) + "," + str(d[i][2]) + "," + str(d[i][3]) + ")"
 	s += "))"
 	return s
-							
+
+import copy
+def merge(one,two): # merges two pdcodes into one plus a reducible crossing
+	pd1 = copy.deepcopy(one)
+	pd2 = copy.deepcopy(two)
+	a = len(pd1)
+	for c in pd1:
+		if 1 in c and 2 not in c:
+			c[c.index(1)] = 2*a+1
+	for c in pd2:
+		if 1 in c and 2 not in c:
+			c[c.index(1)] = 2*len(pd2)+1
+	for c in pd2:
+		for i in range(len(c)):
+			c[i] += 2*a+1
+		pd1 += [c]
+	l = [2*a+2*len(pd2)+2,2*a+1,1,2*a+2]
+	pd1 += [l]
+	return convert(pd1)
+
+def loop(pd):
+	d = Diagram(pd).diameter()
+	print('Diameter = ' + str(d))
+	for i in range(1,2*len(pd)+1):
+		pdcode = copy.deepcopy(pd)
+		for c in pdcode:
+			for j in range(len(c)):
+				if c[j] == i:
+					if c[j-2] == i%(2*len(pd))+1:
+						c[j] = 0
+		for c in pdcode:
+			for j in range(len(c)):
+				if c[j] > i:
+					c[j] += 2
+				elif c[j] == 0:
+					c[j] = i+2
+		l = [i,i+2,i+1,i+1]
+		pdcode += [l]
+		d = Diagram(pdcode)
+		s = str(d.diameter())
+		t = str(d)
+		print('With negative loop on segment ' + str(i) + ' = ' + s)# + '\n' + t)
+		pdcode = copy.deepcopy(pd)
+		for c in pdcode:
+			for j in range(len(c)):
+				if c[j] == i:
+					if c[j-2] == i%(2*len(pd))+1:
+						c[j] = 0
+		for c in pdcode:
+			for j in range(len(c)):
+				if c[j] > i:
+					c[j] += 2
+				elif c[j] == 0:
+					c[j] = i+2
+		l = [i+1,i+1,i+2,i]
+		pdcode += [l]
+		d = Diagram(pdcode)
+		s = str(d.diameter())
+		t = str(d)
+		print('With positive loop on segment ' + str(i) + ' = ' + s)# + '\n' + t)
+		
