@@ -310,6 +310,10 @@ class Diagram:
 					n += 2**(numc-y-1)
 			regions.add(n)
 		return regions
+	def print_region_vectors(self):
+		vectors = self.region_vectors()
+		for v in vectors:
+			print(bin(v)[2:].zfill(len(self.d)))
 	def region_freeze_vectors(self):
 		regions,d2,numc = set(),[],len(self.d)
 		for a in range(1,numc+1):
@@ -395,15 +399,12 @@ class Diagram:
 		regions = self.region_freeze_vectors()	
 		mod = 2**crossings
 		real = {0}
-		#print('level 0:\n[' + bin(0)[2:].zfill(crossings) + ']\n\n' + 'level 1:')
 		for i in regions:
 			real.add(i) 
-			#print('[' + bin(i)[2:].zfill(crossings) + '] ')
 		level = 1
 		while len(real) < mod:
 			level += 1
 			buff = set()
-			#print('\nlevel ' + str(level) + ': ')
 			for i in regions:
 				for j in real:
 					x = 0
@@ -413,8 +414,6 @@ class Diagram:
 						if a[k] != b[k]:				
 							x += 2**(crossings-k-1)
 					buff.add(x)
-			#for p in buff-real:
-				#print('[' + bin((p))[2:].zfill(crossings) + '] ')
 			real.update(buff)
 		return level
 	def distance(self,d):
@@ -556,7 +555,7 @@ def loop(pd):
 		d = Diagram(pdcode)
 		s = str(d.diameter())
 		t = str(d)
-		print('With negative loop on segment ' + str(i) + ' = ' + s)# + '\n' + t)
+		print('With negative loop on segment ' + str(i) + ' = ' + s + '\n' + t)
 		pdcode = copy.deepcopy(pd)
 		for c in pdcode:
 			for j in range(len(c)):
@@ -574,5 +573,5 @@ def loop(pd):
 		d = Diagram(pdcode)
 		s = str(d.diameter())
 		t = str(d)
-		print('With positive loop on segment ' + str(i) + ' = ' + s)# + '\n' + t)
+		print('With positive loop on segment ' + str(i) + ' = ' + s + '\n' + t)
 		
