@@ -351,7 +351,7 @@ class Diagram:
 		for i in regions:
 			real.add(i)
 		level = 1
-		while len(real) < mod:
+		while len(real) < mod and level < crossings+2:
 			level += 1
 			buff = set()
 			for i in regions:
@@ -364,6 +364,7 @@ class Diagram:
 							x += 2**(crossings-k-1)
 					buff.add(x)
 			real.update(buff)
+		print(str(len(real)) + '/' + str(mod) + ' diagrams realized')
 		return level
 	def ediameter(self):
 		crossings = len(self.d)
@@ -375,7 +376,7 @@ class Diagram:
 			real.add(i) 
 			print('[' + bin(i)[2:].zfill(crossings) + '] ')
 		level = 1
-		while len(real) < mod:
+		while len(real) < mod and level < crossings+2:
 			level += 1
 			print('\nlevel ' + str(level) + ': ')
 			for combo in itertools.permutations(regions,level):
@@ -393,6 +394,7 @@ class Diagram:
 				if y not in real:
 					print('[' + bin((y))[2:].zfill(crossings) + '] = ' + s)
 					real.add(y)
+		print(str(len(real)) + '/' + str(mod) + ' diagrams realized')
 		return level
 	def freeze_diameter(self):
 		crossings = len(self.d)
@@ -470,34 +472,19 @@ def min_diameter(): # finds and prints the minimum diameter for reduced Diagrams
 			j += 1
 	return None
 	
-def one_reducible():
-	for i in range(3,13):
-		b = 0
-		if i%2 == 1:
-			b = 2
-		else:
-			b = 3
-		while b <= (i+2)//2:
-			w = i+2-b
-			print('When B = ' + str(b) + ' and W = ' + str(w))
-			for b1 in range(b//2+1):
-				for w1 in range(w//2+1):
-					print('When B1 = ' + str(b1) + ' and W1 = ' + str(w1))
-					p = b1+w1
-					print('P1 = ' + str(p))
-					p = b-b1+w1
-					print('P2 = ' + str(p))
-					p = b1+w-w1+1
-					print('P3 = ' + str(p))
-					p = b-b1+w-w1-1
-					print('P4 = ' + str(p))
-					w1 += 1
-				b1 += 1
-			print('\n')
-			b += 1
-	
-def convert(pdcode): # puts entries from pdcode in order in which they are encountered in traversal
-	d,s,b = {},"Diagram((",[]
+def convert(pdcode): # puts entries from pdcode in order in which they are encountered in traversal in a string
+	s,i = "Diagram((",0
+	l = order(pdcode)
+	for c in l:
+		i += 1
+		if i > 1:
+			s += ","
+		s += "(" + str(l[0]) + "," + str(l[1]) + "," + str(l[2]) + "," + str(l[3]) + ")"
+	s += "))"
+	return s
+
+def order(pdcode): # puts entries from pdcode in order in which they are encounter in traversal in a list
+	d,l,b = {},[],[]
 	for e in pdcode:
 		if 1 in e and 2 not in e:
 			i = e.index(1)
@@ -509,11 +496,8 @@ def convert(pdcode): # puts entries from pdcode in order in which they are encou
 			d[m] = e
 			b += [m]
 	for i in sorted(b):
-		if i > 3:
-			s += ","
-		s += "(" + str(d[i][0]) + "," + str(d[i][1]) + "," + str(d[i][2]) + "," + str(d[i][3]) + ")"
-	s += "))"
-	return s
+		l += [[d[i][0]] + [d[i][1]] + [d[i][2]] + [d[i][3]]]
+	return l
 
 import copy
 def merge(one,two): # merges two pdcodes into one plus a reducible crossing
@@ -523,16 +507,18 @@ def merge(one,two): # merges two pdcodes into one plus a reducible crossing
 	for c in pd1:
 		if 1 in c and 2 not in c:
 			c[c.index(1)] = 2*a+1
+			break
 	for c in pd2:
 		if 1 in c and 2 not in c:
 			c[c.index(1)] = 2*len(pd2)+1
+			break
 	for c in pd2:
 		for i in range(len(c)):
 			c[i] += 2*a+1
 		pd1 += [c]
 	l = [2*a+2*len(pd2)+2,2*a+1,1,2*a+2]
 	pd1 += [l]
-	return convert(pd1)
+	return order(pd1)
 
 def loop(pd):
 	d = Diagram(pd).diameter()
@@ -544,6 +530,7 @@ def loop(pd):
 				if c[j] == i:
 					if c[j-2] == i%(2*len(pd))+1:
 						c[j] = 0
+						break
 		for c in pdcode:
 			for j in range(len(c)):
 				if c[j] > i:
@@ -554,14 +541,14 @@ def loop(pd):
 		pdcode += [l]
 		d = Diagram(pdcode)
 		s = str(d.diameter())
-		t = str(d)
-		print('With negative loop on segment ' + str(i) + ' = ' + s + '\n' + t)
+		print('With negative loop on segment ' + str(i) + ' = ' + s + '\n' + str(d))
 		pdcode = copy.deepcopy(pd)
 		for c in pdcode:
 			for j in range(len(c)):
 				if c[j] == i:
 					if c[j-2] == i%(2*len(pd))+1:
 						c[j] = 0
+						break
 		for c in pdcode:
 			for j in range(len(c)):
 				if c[j] > i:
@@ -570,8 +557,7 @@ def loop(pd):
 					c[j] = i+2
 		l = [i+1,i+1,i+2,i]
 		pdcode += [l]
-		d = Diagram(pdcode)
+		d = Diagram(order(pdcode))
 		s = str(d.diameter())
-		t = str(d)
-		print('With positive loop on segment ' + str(i) + ' = ' + s + '\n' + t)
+		print('With positive loop on segment ' + str(i) + ' = ' + s + '\n' + str(d))
 		
