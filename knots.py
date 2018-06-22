@@ -343,10 +343,10 @@ class Diagram:
 					n += 2**(numc-y-1)
 			regions.add(n)
 		return regions
-	def diameter(self):
+	def link_diameter(self,components):
 		crossings = len(self.d)
 		regions = self.region_vectors()
-		mod = 2**crossings
+		mod = 2**(crossings-components+1)
 		real = {0}
 		for i in regions:
 			real.add(i)
@@ -364,12 +364,14 @@ class Diagram:
 							x += 2**(crossings-k-1)
 					buff.add(x)
 			real.update(buff)
-		print(str(len(real)) + '/' + str(mod) + ' diagrams realized')
+		#print(str(len(real)) + '/' + str(mod) + ' diagrams realized')
 		return level
-	def ediameter(self):
+	def diameter(self):
+		return self.link_diameter(1)
+	def link_ediameter(self,components):
 		crossings = len(self.d)
 		regions = self.region_vectors()
-		mod = 2**crossings
+		mod = 2**(crossings-components+1)
 		real = {0}
 		print('level 0:\n[' + bin(0)[2:].zfill(crossings) + ']\n\n' + 'level 1:')
 		for i in regions:
@@ -379,7 +381,7 @@ class Diagram:
 		while len(real) < mod and level < crossings+2:
 			level += 1
 			print('\nlevel ' + str(level) + ': ')
-			for combo in itertools.permutations(regions,level):
+			for combo in itertools.combinations(regions,level):
 				x,y,s = [0]*crossings,0,""
 				for i in range(level):
 					if i > 0:
@@ -394,8 +396,43 @@ class Diagram:
 				if y not in real:
 					print('[' + bin((y))[2:].zfill(crossings) + '] = ' + s)
 					real.add(y)
-		print(str(len(real)) + '/' + str(mod) + ' diagrams realized')
+		#print(str(len(real)) + '/' + str(mod) + ' diagrams realized')
 		return level
+	def realize_ediameter(self,components):
+		level = self.link_diameter(components)
+		crossings = len(self.d)
+		regions = self.region_vectors()
+		real = {0}
+		for i in regions:
+			real.add(i)
+		for i in range(2,level):
+			for combo in itertools.combinations(regions,i):
+				x,y = [0]*crossings,0
+				for j in range(i):
+					a = list(bin(combo[j])[2:].zfill(crossings))
+					for k in range(crossings):
+						x[k] += int(a[k])
+				for j in range(crossings):
+					if x[j]%2 == 1:
+						y += 2**(crossings-j-1)
+				real.add(y)
+		for combo in itertools.combinations(regions,level):
+			x,y,s = [0]*crossings,0,""
+			for i in range(level):
+				if i > 0:
+					s += " + "
+				a = list(bin(combo[i])[2:].zfill(crossings))
+				for j in range(crossings):
+					x[j] += int(a[j])
+					s += a[j]
+			for i in range(crossings):
+				if x[i]%2 == 1:
+					y += 2**(crossings-i-1)
+			if y not in real:
+				print('[' + bin((y))[2:].zfill(crossings) + '] = ' + s)
+		return level
+	def ediameter(self):
+		return self.link_ediameter(1)
 	def freeze_diameter(self):
 		crossings = len(self.d)
 		regions = self.region_freeze_vectors()	
@@ -521,7 +558,7 @@ def merge(one,two): # merges two pdcodes into one plus a reducible crossing
 	return order(pd1)
 
 def loop(pd):
-	d = Diagram(pd).diameter()
+	d = Diagram(pd).diameter(1)
 	print('Diameter = ' + str(d))
 	for i in range(1,2*len(pd)+1):
 		pdcode = copy.deepcopy(pd)
@@ -540,7 +577,7 @@ def loop(pd):
 		l = [i,i+2,i+1,i+1]
 		pdcode += [l]
 		d = Diagram(pdcode)
-		s = str(d.diameter())
+		s = str(d.diameter(1))
 		print('With negative loop on segment ' + str(i) + ' = ' + s + '\n' + str(d))
 		pdcode = copy.deepcopy(pd)
 		for c in pdcode:
@@ -558,6 +595,6 @@ def loop(pd):
 		l = [i+1,i+1,i+2,i]
 		pdcode += [l]
 		d = Diagram(order(pdcode))
-		s = str(d.diameter())
+		s = str(d.diameter(1))
 		print('With positive loop on segment ' + str(i) + ' = ' + s + '\n' + str(d))
 		
