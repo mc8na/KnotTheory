@@ -164,15 +164,21 @@ class Diagram:
 			c = Crossing(n,len(pdcode)*2)
 			self.d[i] = c
 			i += 1
-		self.components = 0
-		for key in self.d:
-			if abs(self.d[key].i-self.d[key].k) != 1:
-				self.components += 1
-			if abs(self.d[key].j-self.d[key].l) != 1:
-				self.components += 1
+		self.components = self.numComponents()
 	#def rcc(self,i): # RCC move on region i
 		#for n in self.r[i]:
 			#self.d[n].cc()
+	def numComponents(self):
+		if len(self.d) < 3:
+			return 1
+		else:
+			count = 0
+			for key in self.d:
+				if abs(self.d[key].i-self.d[key].k) != 1:
+					count += 1
+				if abs(self.d[key].j-self.d[key].l) != 1:
+					count += 1
+		return count
 	def dtCode(self): # returns an ordered list containing the DT Code of the Diagram
 		pairs = {}
 		for a in self.d:
@@ -209,7 +215,7 @@ class Diagram:
 		return Knot(self.d.copy())
 	def code(self): # returns a list with elements [i,j,k,l] for all crossings
 		l = []
-		for idx in self.d:
+		for idx in range(1,len(self.d)+1):
 			l += [[self.d[idx].i,self.d[idx].j,self.d[idx].k,self.d[idx].l]]
 		return l
 	def __str__(self): # returns the PD Code of the Diagram in string form
@@ -288,24 +294,22 @@ class Diagram:
 	def isAlternating(self):
 		return self.gaussCode().is_alternating()
 	def region_vectors(self):
-		regions,d2,numc = set(),[],len(self.d)
-		for a in range(1,numc+1):
-			d2 += [self.d[a].i] + [self.d[a].j] + [self.d[a].k] + [self.d[a].l]
-		for idx in range(len(d2)):
+		regions,code,numc = set(),self.code(),len(self.d)
+		for idx in range(len(code)):
 			reg,a,n = [0]*numc,idx,0
 			reg[idx//4] = 1
-			temp,d2[a] = d2[a],0
-			b = d2.index(temp)
-			d2[a] = temp
+			temp,code[a] = code[a],0
+			b = code.index(temp)
+			code[a] = temp
 			reg[b//4] = 1
 			if b%4 == 0:
 				a = b+3
 			else:
 				a = b-1
 			while a != idx:
-				temp,d2[a] = d2[a],0
-				b = d2.index(temp)
-				d2[a] = temp
+				temp,code[a] = code[a],0
+				b = code.index(temp)
+				code[a] = temp
 				reg[b//4] = 1
 				if b%4 == 0:
 					a = b+3
