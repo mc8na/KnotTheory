@@ -294,7 +294,9 @@ class Diagram:
 	def isAlternating(self):
 		return self.gaussCode().is_alternating()
 	def region_vectors(self):
-		regions,code,numc = set(),self.code(),len(self.d)
+		regions,code,numc = set(),[],len(self.d)
+		for i in range(1,numc+1):
+			code += [self.d[i].i] + [self.d[i].j] + [self.d[i].k] + [self.d[i].l]
 		for idx in range(len(code)):
 			reg,a,n = [0]*numc,idx,0
 			reg[idx//4] = 1
