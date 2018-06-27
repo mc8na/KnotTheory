@@ -168,7 +168,8 @@ class Diagram:
 	#def rcc(self,i): # RCC move on region i
 		#for n in self.r[i]:
 			#self.d[n].cc()
-	def numComponents(self):
+	def numComponents(self): # finds number of components for knots, hopf link, and other
+							 # links where each component has more than two crossings
 		if len(self.d) < 3:
 			return 1
 		else:
@@ -226,7 +227,7 @@ class Diagram:
 			s += str(self.d[key])
 		s += ']'
 		return s
-	def aPoly(self): # computes the Alexander Polynomial of the Diagram
+	def aPoly(self): # computes the Alexander Polynomial of the knot
 		if len(self.d) < 3:
 			return T(0,0,1,1)
 		gcode = self.gaussCode()
@@ -293,7 +294,7 @@ class Diagram:
 		return self.gaussCode().is_reduced()
 	def isAlternating(self):
 		return self.gaussCode().is_alternating()
-	def region_vectors(self):
+	def region_vectors(self): # returns set of integers corresponding to region vectors of diagram
 		regions,code,numc = set(),[],len(self.d)
 		for i in range(1,numc+1):
 			code += [self.d[i].i] + [self.d[i].j] + [self.d[i].k] + [self.d[i].l]
@@ -322,11 +323,11 @@ class Diagram:
 					n += 2**(numc-y-1)
 			regions.add(n)
 		return regions
-	def print_region_vectors(self):
+	def print_region_vectors(self): # prints the region vectors corresponding to diagram
 		vectors = self.region_vectors()
 		for v in vectors:
 			print(bin(v)[2:].zfill(len(self.d)))
-	def region_freeze_vectors(self):
+	def region_freeze_vectors(self): # returns set of integers corresponding to region vectors of diagram
 		regions,d2,numc = set(),[],len(self.d)
 		for a in range(1,numc+1):
 			d2 += [self.d[a].i] + [self.d[a].j] + [self.d[a].k] + [self.d[a].l]
@@ -355,7 +356,7 @@ class Diagram:
 					n += 2**(numc-y-1)
 			regions.add(n)
 		return regions
-	def diameter(self):
+	def diameter(self): # computes max number of RCCs to realize all sets of crossing changes
 		crossings = len(self.d)
 		regions = self.region_vectors()
 		mod = 2**(crossings-self.components+1)
@@ -377,7 +378,7 @@ class Diagram:
 			real.update(buff)
 		#print(str(len(real)) + '/' + str(mod) + ' diagrams realized')
 		return level
-	def ediameter(self):
+	def ediameter(self): # prints each set of crossing changes as sum of fewest number of region vectors
 		crossings = len(self.d)
 		regions = self.region_vectors()
 		mod = 2**(crossings-self.components+1)
@@ -407,7 +408,8 @@ class Diagram:
 					real.add(y)
 		#print(str(len(real)) + '/' + str(mod) + ' diagrams realized')
 		return level
-	def realize_ediameter(self):
+	def realize_ediameter(self): # prints all sets of crossing changes that realize
+								 # the diameter and the component region vectors
 		level = self.diameter()
 		crossings = len(self.d)
 		regions = self.region_vectors()
@@ -437,17 +439,17 @@ class Diagram:
 				if x[i]%2 == 1:
 					y += 2**(crossings-i-1)
 			if y not in real:
-				#print('[' + bin((y))[2:].zfill(crossings) + '] = ' + s)
+				print('[' + bin((y))[2:].zfill(crossings) + '] = ' + s)
 				num += 1
 		return num
-	def freeze_diameter(self):
+	def freeze_diameter(self): # do not use
 		crossings = len(self.d)
 		regions = self.region_freeze_vectors()	
 		mod = 2**crossings
 		real = {0}
 		real.update(regions) 
 		level = 1
-		while len(real) < mod:
+		while len(real) < mod and level < crossings+2:
 			level += 1
 			buff = set()
 			for i in regions:
@@ -460,8 +462,9 @@ class Diagram:
 							x += 2**(crossings-k-1)
 					buff.add(x)
 			real.update(buff)
+		print(str(len(real)) + '/' + str(mod) + ' diagrams realized')
 		return level
-	def distance(self,d):
+	def distance(self,d): # computes minimum number of RCCs to effect set of crossing changes d
 		regions = self.region_vectors()
 		real,level,crossings = {0},0,len(self.d)
 		while d not in real:
@@ -480,9 +483,17 @@ class Diagram:
 					buff.add(x)
 			real.update(buff)
 		return level
-	def mirror_distance(self):
+	def mirror_distance(self): # computes minimum number of RCCs to change all crossings
 		mod = 2**(len(self.d))-1
 		return self.distance(mod)
+
+def nCk(n, k): # returns value of n choose k
+	if k == 0 or k == n:
+		return 1
+	r,c = min(k,n-k),1
+	for i in range(r):
+		c *= ((n-i)/(i+1))
+	return c
 
 def ncr(n, r): # modified method to return n choose r for lower_bound
     if r > n//2:
@@ -563,7 +574,7 @@ def merge(one,two): # merges two pdcodes into one plus a reducible crossing
 	pd1 += [l]
 	return order(pd1)
 
-def loop(pd):
+def loop(pd): # adds an R1 loop on both sides of every segment and computes diameter of resulting diagram
 	d = Diagram(pd).diameter()
 	print('Diameter = ' + str(d))
 	for i in range(1,2*len(pd)+1):
