@@ -614,4 +614,3 @@ def loop(pd): # adds an R1 loop on both sides of every segment and computes diam
 		d = Diagram(order(pdcode))
 		s = str(d.diameter())
 		print('With positive loop on segment ' + str(i) + ' = ' + s + '\n' + str(d))
-		
