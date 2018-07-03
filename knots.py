@@ -165,21 +165,24 @@ class Diagram:
 			self.d[i] = c
 			i += 1
 		self.components = self.numComponents()
-	#def rcc(self,i): # RCC move on region i
-		#for n in self.r[i]:
-			#self.d[n].cc()
-	def numComponents(self): # finds number of components for knots, hopf link, and other
-							 # links where each component has more than two crossings
-		if len(self.d) < 3:
-			return 1
-		else:
-			count = 0
-			for key in self.d:
-				if abs(self.d[key].i-self.d[key].k) != 1:
-					count += 1
-				if abs(self.d[key].j-self.d[key].l) != 1:
-					count += 1
-		return count
+	def numComponents(self): # returns number of components in the Diagram
+		maxi,components,code = 1,0,self.code()
+		while maxi <= 2*len(self.d):
+			components += 1
+			i1 = code.index(maxi)
+			code[i1] = 0
+			i2 = code.index(maxi)
+			code[i1] = maxi
+			if i1%4 < 2:
+				j1 = i1+2
+			else:
+				j1 = i1-2
+			if i2%4 < 2:
+				j2 = i2+2
+			else:
+				j2 = i2-2
+			maxi = max(code[j1],code[j2])+1
+		return components
 	def dtCode(self): # returns an ordered list containing the DT Code of the Diagram
 		pairs = {}
 		for a in self.d:
@@ -308,8 +311,8 @@ class Diagram:
 				temp,code[i] = code[i],0
 				j = code.index(temp)
 				code[i] = temp
-				reg[j//4] = (reg[j//4]+1)%2
-				#reg[j//4] = 1
+				#reg[j//4] = (reg[j//4]+1)%2
+				reg[j//4] = 1
 				white.add(j)
 				if j%4 == 0:
 					i = j+3
@@ -320,8 +323,8 @@ class Diagram:
 					temp,code[i] = code[i],0
 					j = code.index(temp)
 					code[i] = temp
-					reg[j//4] = (reg[j//4]+1)%2
-					#reg[j//4] = 1
+					#reg[j//4] = (reg[j//4]+1)%2
+					reg[j//4] = 1
 					white.add(j)
 					if j%4 == 0:
 						i = j+3
@@ -335,8 +338,8 @@ class Diagram:
 				temp,code[i] = code[i],0
 				j = code.index(temp)
 				code[i] = temp
-				reg[j//4] = (reg[j//4]+1)%2
-				#reg[j//4] = 1
+				#reg[j//4] = (reg[j//4]+1)%2
+				reg[j//4] = 1
 				black.add(j)
 				if j%4 == 0:
 					i = j+3
@@ -347,8 +350,8 @@ class Diagram:
 					temp,code[i] = code[i],0
 					j = code.index(temp)
 					code[i] = temp
-					reg[j//4] = (reg[j//4]+1)%2
-					#reg[j//4] = 1
+					#reg[j//4] = (reg[j//4]+1)%2
+					reg[j//4] = 1
 					black.add(j)
 					if j%4 == 0:
 						i = j+3
@@ -427,91 +430,91 @@ class Diagram:
 			regions.add(n)
 		return regions
 	def diameter(self): # computes max number of RCCs to realize all sets of crossing changes
-		crossings = len(self.d)
+		numc = len(self.d)
 		regions = self.region_vectors()
-		mod = 2**(crossings-self.components+1)
+		mod = 2**(numc-self.components+1)
 		real = {0}
 		real.update(regions)
 		level = 1
-		while len(real) < mod and level < crossings+2:
+		while len(real) < mod and level < numc+2:
 			level += 1
 			buff = set()
 			for i in regions:
 				for j in real:
 					x = 0
-					a = list(bin(i)[2:].zfill(crossings))
-					b = list(bin(j)[2:].zfill(crossings))
-					for k in range(crossings):
+					a = list(bin(i)[2:].zfill(numc))
+					b = list(bin(j)[2:].zfill(numc))
+					for k in range(numc):
 						if a[k] != b[k]:				
-							x += 2**(crossings-k-1)
+							x += 2**(numc-k-1)
 					buff.add(x)
 			real.update(buff)
 		#print(str(len(real)) + '/' + str(mod) + ' diagrams realized')
 		return level
 	def ediameter(self): # prints each set of crossing changes as sum of fewest number of region vectors
-		crossings = len(self.d)
+		numc = len(self.d)
 		regions = self.region_vectors()
-		mod = 2**(crossings-self.components+1)
+		mod = 2**(numc-self.components+1)
 		real = {0}
-		print('level 0:\n[' + bin(0)[2:].zfill(crossings) + ']\n\n' + 'level 1:')
+		print('level 0:\n[' + bin(0)[2:].zfill(numc) + ']\n\n' + 'level 1:')
 		for i in regions:
 			real.add(i) 
-			print('[' + bin(i)[2:].zfill(crossings) + '] ')
+			print('[' + bin(i)[2:].zfill(numc) + '] ')
 		level = 1
-		while len(real) < mod and level < crossings+2:
+		while len(real) < mod and level < numc+2:
 			level += 1
 			print('\nlevel ' + str(level) + ': ')
 			for combo in itertools.combinations(regions,level):
-				x,y,s = [0]*crossings,0,""
+				x,y,s = [0]*numc,0,""
 				for i in range(level):
 					if i > 0:
 						s += " + "
-					a = list(bin(combo[i])[2:].zfill(crossings))
-					for j in range(crossings):
+					a = list(bin(combo[i])[2:].zfill(numc))
+					for j in range(numc):
 						x[j] += int(a[j])
 						s += a[j]
-				for i in range(crossings):
+				for i in range(numc):
 					if x[i]%2 == 1:
-						y += 2**(crossings-i-1)
+						y += 2**(numc-i-1)
 				if y not in real:
-					print('[' + bin((y))[2:].zfill(crossings) + '] = ' + s)
+					print('[' + bin((y))[2:].zfill(numc) + '] = ' + s)
 					real.add(y)
 		#print(str(len(real)) + '/' + str(mod) + ' diagrams realized')
 		return level
 	def realize_ediameter(self): # prints all sets of crossing changes that realize
 								 # the diameter and the component region vectors
 		level = self.diameter()
-		crossings = len(self.d)
+		numc = len(self.d)
 		regions = self.region_vectors()
 		real = {0}
 		for i in range(1,level):
 			for combo in itertools.combinations(regions,i):
-				x,y = [0]*crossings,0
+				x,y = [0]*numc,0
 				for j in range(i):
-					a = list(bin(combo[j])[2:].zfill(crossings))
-					for k in range(crossings):
+					a = list(bin(combo[j])[2:].zfill(numc))
+					for k in range(numc):
 						x[k] += int(a[k])
-				for j in range(crossings):
+				for j in range(numc):
 					if x[j]%2 == 1:
-						y += 2**(crossings-j-1)
+						y += 2**(numc-j-1)
 				real.add(y)
-		num = 0
+		count = 0
 		for combo in itertools.combinations(regions,level):
-			x,y,s = [0]*crossings,0,""
+			x,y,s = [0]*numc,0,""
 			for i in range(level):
 				if i > 0:
 					s += " + "
-				a = list(bin(combo[i])[2:].zfill(crossings))
-				for j in range(crossings):
+				a = list(bin(combo[i])[2:].zfill(numc))
+				for j in range(numc):
 					x[j] += int(a[j])
 					s += a[j]
-			for i in range(crossings):
+			for i in range(numc):
 				if x[i]%2 == 1:
-					y += 2**(crossings-i-1)
+					y += 2**(numc-i-1)
 			if y not in real:
-				print('[' + bin((y))[2:].zfill(crossings) + '] = ' + s)
-				num += 1
-		return num
+				print('[' + bin((y))[2:].zfill(numc) + '] = ' + s)
+				count += 1
+		return count
 	def freeze_diameter(self): # do not use
 		crossings = len(self.d)
 		regions = self.region_freeze_vectors()	
@@ -536,18 +539,18 @@ class Diagram:
 		return level
 	def distance(self,d): # computes minimum number of RCCs to effect set of crossing changes d
 		regions = self.region_vectors()
-		real,level,crossings = {0},0,len(self.d)
+		real,level,numc = {0},0,len(self.d)
 		while d not in real:
 			level += 1
 			buff = set()
 			for i in regions:
 				for j in real:
 					x = 0
-					a = list(bin(i)[2:].zfill(crossings))
-					b = list(bin(j)[2:].zfill(crossings))
-					for k in range(crossings):
+					a = list(bin(i)[2:].zfill(numc))
+					b = list(bin(j)[2:].zfill(numc))
+					for k in range(numc):
 						if a[k] != b[k]:				
-							x += 2**(crossings-k-1)
+							x += 2**(numc-k-1)
 					if x == d:
 						return level
 					buff.add(x)

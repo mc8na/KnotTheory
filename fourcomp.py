@@ -33,6 +33,24 @@ ineff.append({"P","BG","BR","GR","PBG","PBR","PGR","W"})
 ineff.append({"P","B","G","R","PBG","PBR","PGR","BGR"})
 ineff.append({"PB","PG","PR","BG","BR","GR","PBGR","W"})
 
+def foo():
+	for i in range(1,len(ineff)):
+		for c1 in itertools.combinations(ineff[i],4):
+			combo,l,s = set(),[],set()
+			for j in c1:
+				combo.add(j)
+			for j in range(1,len(ineff)):
+				l.append((ineff[j]&ineff[i])-combo)
+			comp = ineff[i]-combo
+			for c2 in itertools.combinations(comp,2):
+				for j in c2:
+					s.add(j)
+				if s not in l:
+					print(str(ineff[i]))
+					print(str(c1))
+					return False
+	return True
+			
 def nCk(n, k): # returns value of n choose k
 	if k == 0 or k == n:
 		return 1
