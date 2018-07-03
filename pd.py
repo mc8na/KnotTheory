@@ -1969,3 +1969,122 @@ def print_to_file():
 		#f.write(str(key) + " = " + str(i) + "\n")
 		print(str(key) + " = " + str(i))
 	f.close()
+	
+def ncr(n, r): # modified method to return n choose r for lower_bound
+    if r > n//2:
+    	return 0
+    if r == 0 or r == n:
+    	return 1
+    k,c = min(r, n-r),1
+    for i in range(k):
+    	c *= ((n-i)/(i+1))
+    if 2*r == n:
+    	return c//2
+    return c		
+def lower_bound(b,w): # returns minimum number of RCC moves needed to generate sufficient number of diagrams
+	sum,k = 0,-1
+	while sum < 2**(b+w-2):
+		k += 1
+		for i in range(0,k+1):
+			sum += ncr(b,k-i)*ncr(w,i)
+	return k
+def min_diameter(): # finds and prints the minimum diameter for reduced Diagrams up to 12 crossings
+	for i in range(3,13):
+		j = 0
+		if i%2 == 1:
+			j = 2
+		else:
+			j = 3
+		while j <= (i+2)//2:
+			lb = lower_bound(j,i+2-j)
+			print('Minimum diameter for ' + str(j) + ' black and ' + str(i+2-j) + ' white regions is ' + str(lb))
+			j += 1
+	return None
+	
+def convert(pdcode): # puts entries from pdcode in order in which they are encountered in traversal in a string
+	s,i = "Diagram((",0
+	l = order(pdcode)
+	for c in l:
+		i += 1
+		if i > 1:
+			s += ","
+		s += "(" + str(l[0]) + "," + str(l[1]) + "," + str(l[2]) + "," + str(l[3]) + ")"
+	s += "))"
+	return s
+
+def order(pdcode): # puts entries from pdcode in order in which they are encounter in traversal in a list
+	d,l,b = {},[],[]
+	for e in pdcode:
+		if 1 in e and 2 not in e:
+			i = e.index(1)
+			m = e[i-1]+e[i-3]
+			d[m] = e
+			b += [m]
+		else:
+			m = min(e[0]+e[2],e[1]+e[3])
+			d[m] = e
+			b += [m]
+	for i in sorted(b):
+		l += [[d[i][0]] + [d[i][1]] + [d[i][2]] + [d[i][3]]]
+	return l
+
+def merge(one,two): # merges two pdcodes into one plus a reducible crossing
+	pd1 = copy.deepcopy(one)
+	pd2 = copy.deepcopy(two)
+	a = len(pd1)
+	for c in pd1:
+		if 1 in c and 2 not in c:
+			c[c.index(1)] = 2*a+1
+			break
+	for c in pd2:
+		if 1 in c and 2 not in c:
+			c[c.index(1)] = 2*len(pd2)+1
+			break
+	for c in pd2:
+		for i in range(len(c)):
+			c[i] += 2*a+1
+		pd1 += [c]
+	l = [2*a+2*len(pd2)+2,2*a+1,1,2*a+2]
+	pd1 += [l]
+	return order(pd1)
+
+def loop(pd): # adds an R1 loop on both sides of every segment and computes diameter of resulting diagram
+	d = Diagram(pd).diameter()
+	print('Diameter = ' + str(d))
+	for i in range(1,2*len(pd)+1):
+		pdcode = copy.deepcopy(pd)
+		for c in pdcode:
+			for j in range(len(c)):
+				if c[j] == i:
+					if c[j-2] == i%(2*len(pd))+1:
+						c[j] = 0
+						break
+		for c in pdcode:
+			for j in range(len(c)):
+				if c[j] > i:
+					c[j] += 2
+				elif c[j] == 0:
+					c[j] = i+2
+		l = [i,i+2,i+1,i+1]
+		pdcode += [l]
+		d = Diagram(pdcode)
+		s = str(d.diameter())
+		print('With negative loop on segment ' + str(i) + ' = ' + s + '\n' + str(d))
+		pdcode = copy.deepcopy(pd)
+		for c in pdcode:
+			for j in range(len(c)):
+				if c[j] == i:
+					if c[j-2] == i%(2*len(pd))+1:
+						c[j] = 0
+						break
+		for c in pdcode:
+			for j in range(len(c)):
+				if c[j] > i:
+					c[j] += 2
+				elif c[j] == 0:
+					c[j] = i+2
+		l = [i+1,i+1,i+2,i]
+		pdcode += [l]
+		d = Diagram(order(pdcode))
+		s = str(d.diameter())
+		print('With positive loop on segment ' + str(i) + ' = ' + s + '\n' + str(d))
