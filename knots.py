@@ -1,4 +1,4 @@
-import functools, itertools
+import functools, itertools, copy
 
 class Crossing: # Crossing for pdcode, holds i,j,k,l and sign (right hand rule)
 	def __init__(self,pdinfo,arcs):
@@ -294,6 +294,76 @@ class Diagram:
 		return self.gaussCode().is_reduced()
 	def isAlternating(self):
 		return self.gaussCode().is_alternating()
+	def black_white(self):
+		vectors,code,numc,b,w = [],[],len(self.d),0,0
+		for i in range(1,numc+1):
+			code += [self.d[i].i] + [self.d[i].j] + [self.d[i].k] + [self.d[i].l]
+		black,white,used = {0,2},{1,3},set()
+		while black or white:
+			s,reg = "",[0]*numc
+			if black:
+				b += 1
+				idx = i = black.pop()
+				used.add(idx)
+				temp,code[i] = code[i],0
+				j = code.index(temp)
+				code[i] = temp
+				reg[j//4] = (reg[j//4]+1)%2
+				#reg[j//4] = 1
+				white.add(j)
+				if j%4 == 0:
+					i = j+3
+				else:
+					i = j-1
+				used.add(i)
+				while i != idx:
+					temp,code[i] = code[i],0
+					j = code.index(temp)
+					code[i] = temp
+					reg[j//4] = (reg[j//4]+1)%2
+					#reg[j//4] = 1
+					white.add(j)
+					if j%4 == 0:
+						i = j+3
+					else:
+						i = j-1
+					used.add(i)
+			else:
+				w += 1
+				idx = i = white.pop()
+				used.add(idx)
+				temp,code[i] = code[i],0
+				j = code.index(temp)
+				code[i] = temp
+				reg[j//4] = (reg[j//4]+1)%2
+				#reg[j//4] = 1
+				black.add(j)
+				if j%4 == 0:
+					i = j+3
+				else:
+					i = j-1
+				used.add(i)
+				while i != idx:
+					temp,code[i] = code[i],0
+					j = code.index(temp)
+					code[i] = temp
+					reg[j//4] = (reg[j//4]+1)%2
+					#reg[j//4] = 1
+					black.add(j)
+					if j%4 == 0:
+						i = j+3
+					else:
+						i = j-1
+					used.add(i)
+			for r in reg:
+				s += str(r)
+			vectors.append(s)
+			white = white-used
+			black = black-used
+		print('Diagram contains ' + str(b) + ' black regions and ' + str(w) + ' white regions')
+		for v in vectors:
+			print(v)
+		return vectors			
 	def region_vectors(self): # returns set of integers corresponding to region vectors of diagram
 		regions,code,numc = set(),[],len(self.d)
 		for i in range(1,numc+1):
@@ -482,6 +552,7 @@ class Diagram:
 						return level
 					buff.add(x)
 			real.update(buff)
+		print('Error: diagram not found')
 		return level
 	def mirror_distance(self): # computes minimum number of RCCs to change all crossings
 		mod = 2**(len(self.d))-1
@@ -553,7 +624,6 @@ def order(pdcode): # puts entries from pdcode in order in which they are encount
 		l += [[d[i][0]] + [d[i][1]] + [d[i][2]] + [d[i][3]]]
 	return l
 
-import copy
 def merge(one,two): # merges two pdcodes into one plus a reducible crossing
 	pd1 = copy.deepcopy(one)
 	pd2 = copy.deepcopy(two)

@@ -105,13 +105,16 @@ def same_set(): # for any set of size 5-8, determines max number that appear in 
 			count += [max]
 		print(str(min(count)) + ' out of ' + str(i) + ' appear in a set')
 
-def combo(): # for any set of 7 or 8, determines whether any 5 or 6, resp., appear in an ineffective set
-	for i in range(7,9):
+def combo(): # for any set of 5-8, determines whether any subset of a certain size appears in an ineffective set
+	for i in range(5,9):
 		count = []
 		bool = True
 		for combo1 in itertools.combinations(subsets,i):
-			m = max(i-2,4)
-			for combo2 in itertools.combinations(combo1,m):
+			if i < 7:
+				max = 5
+			else:
+				max = i-2
+			for combo2 in itertools.combinations(combo1,max):
 				b = False
 				tuple = set()
 				for c in combo2:
@@ -121,5 +124,5 @@ def combo(): # for any set of 7 or 8, determines whether any 5 or 6, resp., appe
 						b = True
 				if not b:
 					bool = False
-		print(str(i) + ' = ' + str(bool) + ' for a set of ' + str(i))
+		print(str(bool) + ' for a set of ' + str(i))
 		
