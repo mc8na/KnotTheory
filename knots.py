@@ -166,22 +166,23 @@ class Diagram:
 			i += 1
 		self.components = self.numComponents()
 	def numComponents(self): # returns number of components in the Diagram
-		maxi,components,code = 1,0,self.code()
-		while maxi <= 2*len(self.d):
+		maxi,components,code = 1,0,self.code() # maxi is arc 1, smallest numbered component of first component
+		while maxi <= 2*len(self.d): # two times as many arcs as crossings
 			components += 1
-			i1 = code.index(maxi)
+			i1 = code.index(maxi) # find one endpoint of arc
 			code[i1] = 0
-			i2 = code.index(maxi)
+			i2 = code.index(maxi) # find other endpoint of arc
 			code[i1] = maxi
-			if i1%4 < 2:
+			if i1%4 < 2: # j1 is opposite arc from i1
 				j1 = i1+2
 			else:
 				j1 = i1-2
-			if i2%4 < 2:
+			if i2%4 < 2: # j2 is opposite arc from i2
 				j2 = i2+2
 			else:
 				j2 = i2-2
-			maxi = max(code[j1],code[j2])+1
+			# either j1 or j2 is the largest numbered arc of that component
+			maxi = max(code[j1],code[j2])+1 # maxi is smallest numbered arc of next component
 		return components
 	def dtCode(self): # returns an ordered list containing the DT Code of the Diagram
 		pairs = {}
@@ -217,10 +218,10 @@ class Diagram:
 		return True
 	def copy(self):
 		return Knot(self.d.copy())
-	def code(self): # returns a list with elements [i,j,k,l] for all crossings
+	def code(self): # returns a list of elements i,j,k,l for all crossings in order of crossing number
 		l = []
 		for idx in range(1,len(self.d)+1):
-			l += [[self.d[idx].i,self.d[idx].j,self.d[idx].k,self.d[idx].l]]
+			l += [self.d[idx].i] + [self.d[idx].j] + [self.d[idx].k] + [self.d[idx].l]
 		return l
 	def __str__(self): # returns the PD Code of the Diagram in string form
 		s = "["
@@ -236,7 +237,7 @@ class Diagram:
 		gcode = self.gaussCode()
 		m = [[T(0,0,0,1) for x in range(len(self.d))] for y in range(len(self.d))]
 		a = 1
-		for n in gcode.code:
+		for n in gcode.code: # construct alexander matrix by tracing through the gausscode
 			if n > 0:
 				m[n-1][a-1] += T(-1,1,1,2)
 			elif self.d[abs(n)].rhr > 0:
@@ -250,17 +251,17 @@ class Diagram:
 		del m[len(m)-1]
 		for n in range(len(m)):
 			del m[n][len(m)]
-		apoly = self.det(m)
+		apoly = self.det(m) # compute determinant of alexander matrix
 		i = 0
-		while i < len(apoly.t) and apoly.t[i] == 0:
+		while i < len(apoly.t) and apoly.t[i] == 0: # find first nonzero coefficient
 			i += 1
 		if i > 0:
-			for j in range(i,len(apoly.t)):
-				apoly.t[j-i],apoly.t[j] = apoly.t[j],0
-		while len(apoly.t) > 1 and apoly.t[-1] == 0:
+			for j in range(i,len(apoly.t)): 
+				apoly.t[j-i],apoly.t[j] = apoly.t[j],0 # remove all common factors of t
+		while len(apoly.t) > 1 and apoly.t[-1] == 0: # remove excess zero terms from end
 			del apoly.t[-1]
 		if apoly.t[0] < 0:
-			apoly *= T(0,0,-1,1)
+			apoly *= T(0,0,-1,1) # make first term positive
 		return apoly
 	def det(self,l): # returns the determinant of matrix l
 		n = len(l)
@@ -298,9 +299,18 @@ class Diagram:
 	def isAlternating(self):
 		return self.gaussCode().is_alternating()
 	def black_white(self):
-		vectors,code,numc,b,w = [],[],len(self.d),0,0
-		for i in range(1,numc+1):
-			code += [self.d[i].i] + [self.d[i].j] + [self.d[i].k] + [self.d[i].l]
+		# setup: vectors stores region vectors contructed, b and w hold number of
+		# black and white regions, black and white hold indices of arcs that are part of
+		# black and white regions, used holds incdices that have been traced already.
+		# basic idea: while there are still arcs that have not been traced, trace that
+		# arc to its other endpoint then make a "left turn" onto the arc clockwise. Add
+		# arcs that have been traced to used, arcs that will be used to trace other regions
+		# to black or white appropriately. Once a circuit has been made, add new region
+		# vector to vectors, and remove all used indices from sets black and white. Then
+		# check for more arcs.
+		vectors,code,numc,b,w = [],self.code(),len(self.d),0,0
+#		for i in range(1,numc+1):
+#			code += [self.d[i].i] + [self.d[i].j] + [self.d[i].k] + [self.d[i].l]
 		black,white,used = {0,2},{1,3},set()
 		while black or white:
 			s,reg = "",[0]*numc
@@ -311,8 +321,8 @@ class Diagram:
 				temp,code[i] = code[i],0
 				j = code.index(temp)
 				code[i] = temp
-				#reg[j//4] = (reg[j//4]+1)%2
-				reg[j//4] = 1
+				reg[j//4] = (reg[j//4]+1)%2 # to be used when reducible region does not affect reducible crossing
+				#reg[j//4] = 1
 				white.add(j)
 				if j%4 == 0:
 					i = j+3
@@ -323,8 +333,8 @@ class Diagram:
 					temp,code[i] = code[i],0
 					j = code.index(temp)
 					code[i] = temp
-					#reg[j//4] = (reg[j//4]+1)%2
-					reg[j//4] = 1
+					reg[j//4] = (reg[j//4]+1)%2
+					#reg[j//4] = 1
 					white.add(j)
 					if j%4 == 0:
 						i = j+3
@@ -338,8 +348,8 @@ class Diagram:
 				temp,code[i] = code[i],0
 				j = code.index(temp)
 				code[i] = temp
-				#reg[j//4] = (reg[j//4]+1)%2
-				reg[j//4] = 1
+				reg[j//4] = (reg[j//4]+1)%2
+				#reg[j//4] = 1
 				black.add(j)
 				if j%4 == 0:
 					i = j+3
@@ -350,8 +360,8 @@ class Diagram:
 					temp,code[i] = code[i],0
 					j = code.index(temp)
 					code[i] = temp
-					#reg[j//4] = (reg[j//4]+1)%2
-					reg[j//4] = 1
+					reg[j//4] = (reg[j//4]+1)%2
+					#reg[j//4] = 1
 					black.add(j)
 					if j%4 == 0:
 						i = j+3
@@ -364,13 +374,15 @@ class Diagram:
 			white = white-used
 			black = black-used
 		print('Diagram contains ' + str(b) + ' black regions and ' + str(w) + ' white regions')
+		i = 0
 		for v in vectors:
-			print(v)
+			i += 1
+			print(str(i) + ' = ' + str(v))
 		return vectors			
 	def region_vectors(self): # returns set of integers corresponding to region vectors of diagram
-		regions,code,numc = set(),[],len(self.d)
-		for i in range(1,numc+1):
-			code += [self.d[i].i] + [self.d[i].j] + [self.d[i].k] + [self.d[i].l]
+		regions,code,numc = set(),self.code(),len(self.d)
+#		for i in range(1,numc+1):
+#			code += [self.d[i].i] + [self.d[i].j] + [self.d[i].k] + [self.d[i].l]
 		for idx in range(len(code)):
 			reg,a,n = [0]*numc,idx,0
 			reg[idx//4] = 1
@@ -401,9 +413,9 @@ class Diagram:
 		for v in vectors:
 			print(bin(v)[2:].zfill(len(self.d)))
 	def region_freeze_vectors(self): # returns set of integers corresponding to region vectors of diagram
-		regions,d2,numc = set(),[],len(self.d)
-		for a in range(1,numc+1):
-			d2 += [self.d[a].i] + [self.d[a].j] + [self.d[a].k] + [self.d[a].l]
+		regions,d2,numc = set(),self.code(),len(self.d)
+#		for a in range(1,numc+1):
+#			d2 += [self.d[a].i] + [self.d[a].j] + [self.d[a].k] + [self.d[a].l]
 		for idx in range(len(d2)):
 			reg,a,n = [1]*numc,idx,0
 			reg[idx//4] = 0
@@ -429,90 +441,109 @@ class Diagram:
 					n += 2**(numc-y-1)
 			regions.add(n)
 		return regions
-	def diameter(self): # computes max number of RCCs to realize all sets of crossing changes
+	def diameter(self):
 		numc = len(self.d)
 		regions = self.region_vectors()
-		mod = 2**(numc-self.components+1)
-		real = {0}
-		real.update(regions)
+		new = list(regions)
+		power = 1<<(numc-self.components+1)
+		real = [False]*power
+		real[0] = True
+		for r in regions:
+			real[r] = True
+		numreal = len(regions) + 1
 		level = 1
-		while len(real) < mod and level < numc+2:
+		while numreal < power and level < numc+2:
 			level += 1
-			buff = set()
+			buff = []
 			for i in regions:
-				for j in real:
-					x = 0
-					a = list(bin(i)[2:].zfill(numc))
-					b = list(bin(j)[2:].zfill(numc))
-					for k in range(numc):
-						if a[k] != b[k]:				
-							x += 2**(numc-k-1)
-					buff.add(x)
-			real.update(buff)
-		#print(str(len(real)) + '/' + str(mod) + ' diagrams realized')
+				for j in new:
+					x = i^j
+					if not real[x]:
+						real[x] = True
+						numreal += 1
+						buff = buff+[x]
+			new = buff
 		return level
+#	def diameter(self): # computes max number of RCCs to realize all sets of crossing changes
+#		numc = len(self.d)
+#		regions = self.region_vectors()
+#		mod = 2**(numc-self.components+1) # number of diagrams total
+#		real = {0} # diagram vectors that have been realized
+#		real.update(regions) # one crossing change
+#		level = 1
+#		while len(real) < mod and level < numc+2:
+#			level += 1
+#			buff = set()
+#			for i in regions:
+#				for j in real: # try adding every region vector to every realized diagram
+#					x = 0
+#					a = list(bin(i)[2:].zfill(numc))
+#					b = list(bin(j)[2:].zfill(numc))
+#					for k in range(numc):
+#						if a[k] != b[k]:				
+#							x += 2**(numc-k-1)
+#					buff.add(x)
+#			real.update(buff)
+#		#print(str(len(real)) + '/' + str(mod) + ' diagrams realized')
+#		return level
 	def ediameter(self): # prints each set of crossing changes as sum of fewest number of region vectors
 		numc = len(self.d)
 		regions = self.region_vectors()
-		mod = 2**(numc-self.components+1)
-		real = {0}
+		power = 1<<(numc-self.components+1)
+		real = [False]*power
 		print('level 0:\n[' + bin(0)[2:].zfill(numc) + ']\n\n' + 'level 1:')
 		for i in regions:
-			real.add(i) 
+			real[i] = True 
 			print('[' + bin(i)[2:].zfill(numc) + '] ')
+		numreal = len(regions)+1
 		level = 1
-		while len(real) < mod and level < numc+2:
+		while numreal < power and level < numc+2:
 			level += 1
 			print('\nlevel ' + str(level) + ': ')
-			for combo in itertools.combinations(regions,level):
-				x,y,s = [0]*numc,0,""
-				for i in range(level):
-					if i > 0:
-						s += " + "
-					a = list(bin(combo[i])[2:].zfill(numc))
-					for j in range(numc):
-						x[j] += int(a[j])
-						s += a[j]
-				for i in range(numc):
-					if x[i]%2 == 1:
-						y += 2**(numc-i-1)
-				if y not in real:
-					print('[' + bin((y))[2:].zfill(numc) + '] = ' + s)
-					real.add(y)
-		#print(str(len(real)) + '/' + str(mod) + ' diagrams realized')
+			for combo in itertools.combinations(regions,level): # try adding all combinations of a certain number of region vectors
+				x = 0
+				for i in range(level): # symmetric difference of all rcc vectors
+					x = x^combo[i]
+				if not real[x]: # realized new diagram
+					real[x] = True
+					numreal += 1
+					s = ""
+					for i in range(level):
+						if i > 0:
+							s += " + "
+						s += bin((combo[i]))[2:].zfill(numc)
+					print('[' + bin((x))[2:].zfill(numc) + "] = " + s) # print out diagram vector and rcc vectors
+		#print(str(numreal) + '/' + str(power) + ' diagrams realized')
 		return level
 	def realize_ediameter(self): # prints all sets of crossing changes that realize
 								 # the diameter and the component region vectors
 		level = self.diameter()
 		numc = len(self.d)
 		regions = self.region_vectors()
-		real = {0}
-		for i in range(1,level):
+		power = 1<<(numc-self.components+1)
+		real = [False]*power
+		real[0] = True
+		for i in range(1,level): # find all diagrams realized by a set of crossings that do not realize the diameter
 			for combo in itertools.combinations(regions,i):
-				x,y = [0]*numc,0
+				x = 0
 				for j in range(i):
-					a = list(bin(combo[j])[2:].zfill(numc))
-					for k in range(numc):
-						x[k] += int(a[k])
-				for j in range(numc):
-					if x[j]%2 == 1:
-						y += 2**(numc-j-1)
-				real.add(y)
+					x = x^combo[j]
+				if not real[x]:
+					real[x] = True
 		count = 0
-		for combo in itertools.combinations(regions,level):
-			x,y,s = [0]*numc,0,""
-			for i in range(level):
-				if i > 0:
-					s += " + "
-				a = list(bin(combo[i])[2:].zfill(numc))
-				for j in range(numc):
-					x[j] += int(a[j])
-					s += a[j]
-			for i in range(numc):
-				if x[i]%2 == 1:
-					y += 2**(numc-i-1)
-			if y not in real:
-				print('[' + bin((y))[2:].zfill(numc) + '] = ' + s)
+		for combo in itertools.combinations(regions,level): # all sets of crossing changes that realize the diameter
+			x = 0
+			s = ""
+			for j in range(level): # symmetric difference over all region crossing changes
+				x = x^combo[j]
+			if not real[x]: # this diagram not yet realized
+				real[x] = True
+				s = ""
+				for i in range(level):
+					if i > 0:
+						s += " + "
+					s += bin((combo[i]))[2:].zfill(numc)
+				print('[' + bin((x))[2:].zfill(numc) + "] = " + s) # print out diagram vector and rcc vectors
 				count += 1
 		return count
 	def freeze_diameter(self): # do not use
@@ -524,6 +555,7 @@ class Diagram:
 		level = 1
 		while len(real) < mod and level < crossings+2:
 			level += 1
+			for combo in 
 			buff = set()
 			for i in regions:
 				for j in real:
@@ -539,27 +571,51 @@ class Diagram:
 		return level
 	def distance(self,d): # computes minimum number of RCCs to effect set of crossing changes d
 		regions = self.region_vectors()
-		real,level,numc = {0},0,len(self.d)
-		while d not in real:
-			level += 1
-			buff = set()
-			for i in regions:
-				for j in real:
-					x = 0
-					a = list(bin(i)[2:].zfill(numc))
-					b = list(bin(j)[2:].zfill(numc))
-					for k in range(numc):
-						if a[k] != b[k]:				
-							x += 2**(numc-k-1)
-					if x == d:
-						return level
-					buff.add(x)
-			real.update(buff)
+		numc = len(self.d)
+		for level in range(numc+2):
+			for combo in itertools.combinations(regions,level):
+				x = 0
+				for i in range(level):
+					x = x^combo[i]
+				if x == d:
+					return level
 		print('Error: diagram not found')
 		return level
 	def mirror_distance(self): # computes minimum number of RCCs to change all crossings
-		mod = 2**(len(self.d))-1
-		return self.distance(mod)
+		return self.distance(1<<(len(self.d))-1)
+	def ineff_sets(self):
+		regions - self.black_white()
+		numc = len(self.d)
+		ineff = [()]
+		for i in range(2,numc+3):
+			for combo in itertools.combinations(regions,i):
+				x = 0
+				for j in range(i):
+					x = x^combo[j]
+				if x == 0:
+					vec = set()
+					for j in range(i):
+						vec.add(combo[j])
+					ineff.append(vec)
+#		regions,numc,ineff,dict,t = self.black_white(),len(self.d),[()],{},1
+#		for r in regions:
+#			dict[r] = t
+#			t += 1
+#		for i in range(2,numc+3):
+#			for combo in itertools.combinations(regions,i):
+#				vec,reg = [0]*numc,set()
+#				for j in range(i):
+#					a = combo[j]
+#					for k in range(numc):
+#						vec[k] += int(a[k])
+#					reg.add(dict[combo[j]])
+#				bool = True
+#				for l in range(numc):
+#					if vec[l]%2 == 1:
+#						bool = False
+#				if bool:
+#					ineff.append(reg)
+		return ineff
 
 def nCk(n, k): # returns value of n choose k
 	if k == 0 or k == n:
