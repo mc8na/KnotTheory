@@ -71,28 +71,29 @@ class Torus:
 					a = b-1
 			for y in range(numc):
 				if reg[y] == 1:
-					n += 2**(numc-y-1)
+					n += 1<<(numc-y-1)
 			regions.add(n)
 		return regions
 	def diameter(self): # computes max number of RCCs to realize all sets of crossing changes
-		regions,real,numc = self.region_vectors(),{0},len(self.d)
-		mod = 2**(numc)
-		real.update(regions)
-		level = 1
-		while level < numc+2:
+		numc,regions,power = len(self.d),self.region_vectors(),1<<(numc-self.components+1)
+		new = list(regions)
+		real = [False]*power
+		real[0] = True
+		for r in regions:
+			real[r] = True
+		level,numreal = 1,len(regions)+1
+		while numreal < power and level < numc+3:
 			level += 1
-			buff = set()
+			buff = []
 			for i in regions:
-				for j in real:
-					x = 0
-					a = list(bin(i)[2:].zfill(numc))
-					b = list(bin(j)[2:].zfill(numc))
-					for k in range(numc):
-						if a[k] != b[k]:				
-							x += 2**(numc-k-1)
-					buff.add(x)
-			real.update(buff)
-		print(str(len(real)) + '/' + str(mod) + ' diagrams realized')
+				for j in new:
+					x = i^j
+					if not real[x]:
+						real[x] = True
+						numreal += 1
+						buff = buff+[x]
+			new = buff
+		print(str(numreal) + '/' + str(power) + ' diagrams realized')
 		return level
 	def shimizu_region_vectors(self):
 		regions,code,numc = set(),self.code(),len(self.d)
@@ -117,79 +118,74 @@ class Torus:
 					a = b-1
 			for y in range(numc):
 				if reg[y] == 1:
-					n += 2**(numc-y-1)
+					n += 1<<(numc-y-1)
 			regions.add(n)
 		return regions
 	def shimizu_diameter(self):
-		regions,real,numc = self.shimizu_region_vectors(),{0},len(self.d)
-		mod = 2**(numc)
-		real.update(regions)
-		level = 1
-		while level < numc+2:
+		numc,regions,power = len(self.d),self.shimizu_region_vectors(),1<<(numc-self.components+1)
+		new = list(regions)
+		real = [False]*power
+		real[0] = True
+		for r in regions:
+			real[r] = True
+		level,numreal = 1,len(regions)+1
+		while numreal < power and level < numc+3:
 			level += 1
-			buff = set()
+			buff = []
 			for i in regions:
-				for j in real:
-					x = 0
-					a = list(bin(i)[2:].zfill(numc))
-					b = list(bin(j)[2:].zfill(numc))
-					for k in range(numc):
-						if a[k] != b[k]:				
-							x += 2**(numc-k-1)
-					buff.add(x)
-			real.update(buff)
-		print(str(len(real)) + '/' + str(mod) + ' diagrams realized')
+				for j in new:
+					x = i^j
+					if not real[x]:
+						real[x] = True
+						numreal += 1
+						buff = buff+[x]
+			new = buff
+		print(str(numreal) + '/' + str(power) + ' diagrams realized')
 		return level
 	def ediameter(self): # prints each set of crossing changes as sum of fewest number of region vectors
-		regions,real,numc = self.region_vectors(),{0},len(self.d)
-		mod = 2**(numc)
+		numc = len(self.d)
+		regions = self.region_vectors()
+		power = 1<<(numc-self.components+1)
+		real = [False]*power
+		real[0] = True
 		print('level 0:\n[' + bin(0)[2:].zfill(numc) + ']\n\n' + 'level 1:')
 		for i in regions:
-			real.add(i) 
+			real[i] = True 
 			print('[' + bin(i)[2:].zfill(numc) + '] ')
+		numreal = len(regions)+1
 		level = 1
-		while level < numc+2:
+		while numreal < power and level < numc+2:
 			level += 1
 			print('\nlevel ' + str(level) + ': ')
-			for combo in itertools.combinations(regions,level):
-				x,y,s = [0]*numc,0,""
-				for i in range(level):
-					if i > 0:
-						s += " + "
-					a = list(bin(combo[i])[2:].zfill(numc))
-					for j in range(numc):
-						x[j] += int(a[j])
-						s += a[j]
-				for i in range(numc):
-					if x[i]%2 == 1:
-						y += 2**(numc-i-1)
-				if y not in real:
-					print('[' + bin((y))[2:].zfill(numc) + '] = ' + s)
-					real.add(y)
-		print(str(len(real)) + '/' + str(mod) + ' diagrams realized')
+			for combo in itertools.combinations(regions,level): # try adding all combinations of a certain number of region vectors
+				x = 0
+				for i in range(level): # symmetric difference of all rcc vectors
+					x = x^combo[i]
+				if not real[x]: # realized new diagram
+					real[x] = True
+					numreal += 1
+					s = ""
+					for i in range(level):
+						if i > 0:
+							s += " + "
+						s += bin((combo[i]))[2:].zfill(numc)
+					print('[' + bin((x))[2:].zfill(numc) + "] = " + s) # print out diagram vector and rcc vectors
+		print(str(numreal) + '/' + str(power) + ' diagrams realized')
 		return level
 	def distance(self,d): # computes minimum number of RCCs to effect set of crossing changes d
 		regions = self.region_vectors()
-		real,level,numc = {0},0,len(self.d)
-		while d not in real:
-			level += 1
-			buff = set()
-			for i in regions:
-				for j in real:
-					x = 0
-					a = list(bin(i)[2:].zfill(numc))
-					b = list(bin(j)[2:].zfill(numc))
-					for k in range(numc):
-						if a[k] != b[k]:				
-							x += 2**(numc-k-1)
-					if x == d:
-						return level
-					buff.add(x)
-			real.update(buff)
+		numc = len(self.d)
+		for level in range(numc+2):
+			for combo in itertools.combinations(regions,level):
+				x = 0
+				for i in range(level):
+					x = x^combo[i]
+				if x == d:
+					return level
 		print('Error: diagram not found')
 		return level
 	def mirror_distance(self): # computes minimum number of RCCs to change all crossings
-		mod = 2**(len(self.d))-1
+		mod = 1<<(len(self.d))-1
 		return self.distance(mod)
 	def black_white(self):
 		vectors,code,numc,b,w = [],self.code(),len(self.d),0,0
@@ -204,7 +200,7 @@ class Torus:
 				j = code.index(temp)
 				code[i] = temp
 				reg[j//4] = (reg[j//4]+1)%2
-				#reg[j//4] = 1
+				#reg[j//4] = 1 # for shimizu's rcc definition
 				white.add(j)
 				if j%4 == 0:
 					i = j+3

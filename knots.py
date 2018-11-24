@@ -405,7 +405,7 @@ class Diagram:
 					a = b-1
 			for y in range(numc):
 				if reg[y] == 1:
-					n += 2**(numc-y-1)
+					n += 1<<(numc-y-1)
 			regions.add(n)
 		return regions
 	def print_region_vectors(self): # prints the region vectors corresponding to diagram
@@ -438,7 +438,7 @@ class Diagram:
 					a = b-1
 			for y in range(numc):
 				if reg[y] == 1:
-					n += 2**(numc-y-1)
+					n += 1<<(numc-y-1)
 			regions.add(n)
 		return regions
 	def diameter(self):
@@ -491,6 +491,7 @@ class Diagram:
 		regions = self.region_vectors()
 		power = 1<<(numc-self.components+1)
 		real = [False]*power
+		real[0] = True
 		print('level 0:\n[' + bin(0)[2:].zfill(numc) + ']\n\n' + 'level 1:')
 		for i in regions:
 			real[i] = True 
