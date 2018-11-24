@@ -166,6 +166,8 @@ class Diagram:
 			i += 1
 		self.components = self.numComponents()
 	def numComponents(self): # returns number of components in the Diagram
+		if(len(self.d) == 0):
+			return 1
 		maxi,components,code = 1,0,self.code() # maxi is arc 1, smallest numbered component of first component
 		while maxi <= 2*len(self.d): # two times as many arcs as crossings
 			components += 1
@@ -463,6 +465,7 @@ class Diagram:
 						numreal += 1
 						buff = buff+[x]
 			new = buff
+		print(str(numreal) + '/' + str(power) + ' diagrams realized')
 		return level
 #	def diameter(self): # computes max number of RCCs to realize all sets of crossing changes
 #		numc = len(self.d)
