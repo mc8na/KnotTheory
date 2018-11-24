@@ -555,7 +555,6 @@ class Diagram:
 		level = 1
 		while len(real) < mod and level < crossings+2:
 			level += 1
-			for combo in 
 			buff = set()
 			for i in regions:
 				for j in real:
