@@ -1,3 +1,11 @@
+# Filename: DavidClayton-PythonProgram.py
+# Author: David Clayton
+#
+# Defines Knot class and methods to determine whether a diagram
+# is equivalent to the unknot using Reidemeister moves
+#
+# Used as a Python coding example
+
 import functools, itertools
 class Knot:
 	def __init__(self,gaussCode):

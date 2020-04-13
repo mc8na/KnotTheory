@@ -1,3 +1,8 @@
+# Filename: loop.txt
+# Author: Miles Clikeman
+#
+# Output on the diameter of knot diagrams created by adding a reducible loop onto different segements of reduced knot diagrams.
+
 3_1 >>> loop(       [[1,5,2,4],[3,1,4,6],[5,3,6,2]])
 Diameter = 2
 With loop on segment 1 = 2

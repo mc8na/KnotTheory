@@ -1,3 +1,8 @@
+# Filename: threecomp.py
+# Author: Miles Clikeman
+#
+# Attempts to identify patterns in the shading subsets of three-component reduced link diagrams.
+
 import itertools
 
 subsets = {"P","B","G","PB","PG","BG","PBG","W"}
@@ -18,7 +23,7 @@ def nCk(n, k): # returns value of n choose k
 		c *= ((n-i)/(i+1))
 	return int(c)
 
-def tuples(num):
+def tuples(num): # prints how many possible tuples appear in a given number of ineffective sets
 	dict = {}
 	for combo in itertools.combinations(subsets,num):
 		count,tuple = 0,set()
@@ -35,7 +40,7 @@ def tuples(num):
 		print(str(dict[key]) + '/' + str(nCk(8,num)) + ' ' + str(num) + '-tuples appear ' + str(key) + ' times')
 	print('')
 
-def print_tuples():
+def print_tuples(): # prints the tuples found in tuples()
 	for i in range(1,4):
 		tuples(i)
 

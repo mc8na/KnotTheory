@@ -1,3 +1,8 @@
+# Filename: nonalternating.py
+# Author: Miles Clikeman
+#
+# Planar Diagram codes for nonalternating knot diagrams with eleven and twelve crossings.
+
 from knots import *
 na = {}
 nal4 = {}

@@ -1,3 +1,11 @@
+# Filename: knots.py
+# Author: Miles Clikeman
+#
+# Defines the Diagram class for knot diagrams with methods to compute
+#   the number of components, Gauss code, DT code, Alexander Polynomial,
+#   checkerboard shading, region vectors, diameter, and ineffective sets
+#   of a given knot diagram when initialized with the Planar Diagram code.
+
 import functools, itertools, copy
 
 class Crossing: # Crossing for pdcode, holds i,j,k,l and sign (right hand rule)
@@ -58,6 +66,7 @@ class T: # T variable used in aPoly() function to compute Alexander Polynomial
         s += " + " + str(self.t[i]) + "t^" + str(i)
     return s
 
+# Gauss Code class
 class GCode:
   def __init__(self,gaussCode):
     d = {}
@@ -155,6 +164,8 @@ class GCode:
   def __str__(self):
     return str(self.code)
     
+# Diagram class for Knot Diagrams
+# initialized with the Planar Diagram code for the given diagram
 # k = Diagram( ( (i,j,k,l),(i,j,k,l)... ) )
 class Diagram:
   def __init__(self,pdcode):

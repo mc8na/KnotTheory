@@ -1,3 +1,10 @@
+# Filename: links.py
+# Author: Miles Clikeman
+#
+# Planar Diagram codes for links with up to four components and up to eleven crossings.
+# l2 stores two-component links, l3 stores 3-component links, and l4
+#   stores four-component links
+
 from knots import *
 l2,l3,l4 = {},{},{}
 l2[2_1] = Diagram([[4, 1, 3, 2],[2, 3, 1, 4]])

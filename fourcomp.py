@@ -1,3 +1,7 @@
+# Filename: fourcomp.py
+# Author: Miles Clikeman
+# Attempts to identify patterns in the shading subsets of four-component reduced link diagrams.
+
 import itertools
 subsets = {"P","B","G","R","PB","PG","PR","BG","BR","GR","PBG","PBR","PGR","BGR","PBGR","W"}
 
@@ -76,7 +80,7 @@ def tuples(num): # prints how many possible tuples appear in a given number of i
 		print(str(dict[key]) + '/' + str(nCk(16,num)) + ' ' + str(num) + '-tuples appear ' + str(key) + ' times')
 	print('')
 
-def print_tuples():
+def print_tuples(): # prints the tuples found in tuples()
 	for i in range(1,9):
 		tuples(i)
 		

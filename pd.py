@@ -1,3 +1,8 @@
+# Filename: fourcomp.py
+# Author: Miles Clikeman
+#
+# Planar Diagram codes for knots with up to twelve crossings to be used to generate data.
+
 from knots import *
 d = {}
 d[3_1] = Diagram(((1,5,2,4),(5,3,6,2),(3,1,4,6)))

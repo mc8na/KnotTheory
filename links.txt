@@ -1,3 +1,10 @@
+# Filename: links.txt
+# Author: Miles Clikeman
+#
+# Output on the diameter of reduced link diagrams with up to eleven crossings.
+#
+# Ex. The first output line 21 = 1 means the two-component link diagram with 2 crossings and id 1 has diameter equal to 1
+
 Two components:
 21 = 1
 41 = 2

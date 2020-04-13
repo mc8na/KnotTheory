@@ -1,3 +1,10 @@
+# Filename: diameter.txt
+# Author: Miles Clikeman
+#
+# Output on the diameter of reduced knot diagrams with up to twelve crossings
+#
+# Ex. the first line 31 = 2 means that the 3-crossing knot diagram with id 1 has diameter equal to 2.
+
 Alternating:
 31 = 2
 41 = 2

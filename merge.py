@@ -1,3 +1,8 @@
+# Filename: merge.py
+# Author: Miles Clikeman
+#
+# Planar Diagram codes for knot diagrams with up to eight crossings merged together with one reducible crossing.
+
 from knots import *
 m = {}
 m[3131] = Diagram(((1,5,2,4),(5,3,6,2),(3,7,4,6),(14,7,1,8),(8,12,9,11),(12,10,13,9),(10,14,11,13)))

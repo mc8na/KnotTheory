@@ -1,3 +1,8 @@
+# Filename: torus.py
+# Author: Miles Clikeman
+#
+# Contains code to find the number of components, checkerboard shading, region vectors, and diameter of knot diagrams embedded on a torus.
+
 import functools, itertools, copy
 
 class Crossing: # Crossing for pdcode, holds i,j,k,l and sign (right hand rule)
@@ -30,7 +35,7 @@ class Torus:
 		for i in range(1,len(self.d)+1):
 			code += [self.d[i].i] + [self.d[i].j] + [self.d[i].k] + [self.d[i].l]
 		return code
-	def numComponents(self):
+	def numComponents(self): # returns the number of components of the link diagram
 		maxi,components,code = 1,0,self.code()
 		while maxi <= 2*len(self.d):
 			components += 1
@@ -95,7 +100,7 @@ class Torus:
 			new = buff
 		print(str(numreal) + '/' + str(power) + ' diagrams realized')
 		return level
-	def shimizu_region_vectors(self):
+	def shimizu_region_vectors(self): # computes region vectors where reducible region counts twice
 		regions,code,numc = set(),self.code(),len(self.d)
 		for idx in range(len(code)):
 			reg,a,n = [0]*numc,idx,0
@@ -121,7 +126,7 @@ class Torus:
 					n += 1<<(numc-y-1)
 			regions.add(n)
 		return regions
-	def shimizu_diameter(self):
+	def shimizu_diameter(self): # diameter of the diagram for Shimizu RCC
 		numc,regions,power = len(self.d),self.shimizu_region_vectors(),1<<(numc-self.components+1)
 		new = list(regions)
 		real = [False]*power
@@ -187,7 +192,7 @@ class Torus:
 	def mirror_distance(self): # computes minimum number of RCCs to change all crossings
 		mod = 1<<(len(self.d))-1
 		return self.distance(mod)
-	def black_white(self):
+	def black_white(self): # returns black and white regions from checkerboard shading of the diagram
 		vectors,code,numc,b,w = [],self.code(),len(self.d),0,0
 		black,white,usedb,usedw = {0,2},{1,3},set(),set()
 		while black or white:
