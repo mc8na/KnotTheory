@@ -1,11 +1,13 @@
 # Filename: fourcomp.py
 # Author: Miles Clikeman
+#
 # Attempts to identify patterns in the shading subsets of four-component reduced link diagrams.
 
 import itertools
 subsets = {"P","B","G","R","PB","PG","PR","BG","BR","GR","PBG","PBR","PGR","BGR","PBGR","W"}
 
-ineff = [set()]
+ineff = [set()] # holds the shading subsets of ineffective sets for four-component reduced link diagrams
+
 ineff.append({"P","PB","PG","PR","PBG","PBR","PGR","PBGR"})
 ineff.append({"B","G","R","BG","BR","GR","BGR","W"})
 ineff.append({"B","PB","BG","BR","PBG","PBR","BGR","PBGR"})

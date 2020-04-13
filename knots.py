@@ -26,7 +26,7 @@ class Crossing: # Crossing for pdcode, holds i,j,k,l and sign (right hand rule)
 
 class T: # T variable used in aPoly() function to compute Alexander Polynomial
   def __init__(self,c,e,i,n): # creates list with indices corresponding to exponents
-                # and values corresponding to coefficients of terms
+                              # and values corresponding to coefficients of terms
     self.t = [0]*n
     self.t[0] += i
     self.t[e] += c
