@@ -183,9 +183,7 @@ class Diagram:
     while maxi <= 2*len(self.d): # two times as many arcs as crossings
       components += 1
       i1 = code.index(maxi) # find one endpoint of arc
-      code[i1] = 0
-      i2 = code.index(maxi) # find other endpoint of arc
-      code[i1] = maxi
+      i2 = code.index(maxi,i1+1) # find other endpoint of arc
       if i1%4 < 2: # j1 is opposite arc from i1
         j1 = i1+2
       else:
