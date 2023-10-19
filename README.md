@@ -1,6 +1,8 @@
 # KnotTheory
 
-This repository contains code for computing knot invariants and exploring properties of the region crossing change operation. 
+This repository contains code for computing knot invariants and exploring properties of the region crossing change operation.
+
+See KnotTheory_Presentation for a visual explanation of what the code is doing.
 
 knots.py: Defines the Diagram class for knot diagrams with methods to compute the number of components, Gauss code, DT code, Alexander Polynomial, checkerboard shading, region vectors, diameter, and ineffective sets of a given knot diagram when initialized with the Planar Diagram code.
 
